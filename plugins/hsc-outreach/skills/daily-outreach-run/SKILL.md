@@ -103,6 +103,12 @@ is named but its account is not connected or the database is not found
 through it, skip that step and log partial with Fix "Connect <account> in
 Composio, or correct the <parameter> in your scheduled task".
 
+**Installed version.** The plugin download stamps its version into the line
+below; a copy read from the repo says `unstamped`. Read it from this file's
+own text as you loaded it, never from another file in the plugin (§4.9).
+
+This plugin's version: `1cf85844`.
+
 ## 4. Procedure
 
 ### 4.1 Rows
@@ -243,6 +249,17 @@ tasks appear in the Summary only as counts.
 
 If the Run log row titled "Watchdog heartbeat" has a Next run due in the
 past, say so first in the digest: the watchdog itself has stopped.
+
+Then the owner's own setup, when the prospecting server is connected. Call
+`whoami` once:
+
+- **Plugin.** Compare its `plugin_version` with the version in §3 — the
+  "This plugin's version" line of this file. When they differ, add "Update
+  your outreach plugin — https://prospecting.hscompute.com/settings/install#plugin".
+  When the line says `unstamped`, or `whoami` has no `plugin_version`, say
+  nothing: there is nothing to compare.
+- **Setup.** When its `whats_new` is dated on or after the day of Since, add
+  "New setup step: <title> — <url>", with that entry's title and url.
 
 End with a digest for the owner, at most 15 lines: overdue next steps, stalled
 threads with drafts waiting or suggested messages (§4.6), suggested status
