@@ -6,8 +6,10 @@ description: Use to check the outreach automation for missed or failed runs — 
 # Outreach watchdog
 
 Catch broken automation within hours instead of when someone notices stale
-data. Every job writes one Run log row per run, including when it should run
-next (see daily-outreach-run §4.9); this skill reads those rows.
+data. Every job — the server's code jobs and the Claude jobs alike — keeps one Run
+log row per day (per owner, for the daily outreach run), updated in place by
+each run, including when it should run next (see daily-outreach-run §4.9);
+this skill reads those rows. Most jobs now run hourly.
 
 ## 0. How to read this file
 
@@ -56,9 +58,24 @@ Times are America/Los_Angeles.
 
 Group Run log rows by Job and Owner, ignoring the watchdog's own rows (Job
 "Watchdog": alerts and the heartbeat), and take the newest row of each group
-by Started.
+by Finished (by Started when Finished is empty). One row stands for a whole
+day of runs: its Finished, Next run due, Result, Error and Fix are the latest
+run's, so it reads as the job's current health. Next run due is about an hour
+after the latest run. A code job's Summary opens with "Runs today: N — …",
+the day's earlier problems; those are history, not a current problem.
 
-- **Missed:** its Next run due is more than 2 hours in the past.
+- **Missed:** its Next run due is more than 2 hours in the past. An hourly
+  job sets Next run due one hour ahead, and the scheduler spreads hourly
+  starts across the hour, so a single late or skipped run is noise; two
+  hours past due means at least two runs in a row did not happen. Daily jobs
+  get the same grace.
+- **Overnight:** a Daily outreach run may need its owner's computer, which
+  sleeps at night. When its Next run due falls between 8pm and 8am, it is
+  missed only from 10am, once the morning's runs have had their chance.
+  A missed Daily outreach run's Fix is "Check that your Daily outreach run
+  task is scheduled hourly (rerun /outreach-setup if it is still daily) and
+  that its computer is awake": a task still on its old daily schedule runs
+  the hourly skill once a day, and is missed every day until setup reruns.
 - **Failed:** its Result is failed.
 - **Degraded:** its Result is partial and its Fix field is not empty.
 
@@ -72,11 +89,11 @@ Query the whole Run log through `hsc`. Rows older than 14 days can be ignored.
 
 For each problem, report once, then remind once a day while it lasts: skip
 it when a row titled "Alert · <Job> · <Owner> · …" for the same group was
-started in the last 20 hours. When a group's newest row is ok and an alert
-for it exists from after that group's previous failure, report it as
-recovered once, by writing a row titled "Recovered · <Job> · <Owner> · <date>"
-(Job "Watchdog", Result ok); skip groups that already have such a row newer
-than their last alert.
+started in the last 20 hours. When a group's newest row is no longer a
+problem and its newest alert is newer than its newest "Recovered · <Job> ·
+<Owner> · …" row (or it has none), report it as recovered once, by writing a
+row titled "Recovered · <Job> · <Owner> · <date>" (Job "Watchdog", Result
+ok).
 
 ### 4.3 Write
 

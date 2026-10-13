@@ -1,12 +1,12 @@
 ---
 name: outreach-setup
-description: Use to set up a teammate for HSC sponsor outreach, or when someone runs /outreach-setup — connects Notion through Composio (the shared HSC workspace as `hsc`, plus any workspace of their own), checks their other connectors, confirms they can see the Sponsors CRM, records their LinkedIn connections as warm routes, points them at map sharing, schedules their daily outreach run (with their own CRM and task tracker if they keep them) and runs it once. Also use for "set me up for outreach", "install the outreach automation", "connect my Notion workspaces", or Evan's central setup of the watchdog and crawl.
+description: Use to set up a teammate for HSC sponsor outreach, or when someone runs /outreach-setup — connects Notion through Composio (the shared HSC workspace as `hsc`, plus any workspace of their own), checks their other connectors, confirms they can see the Sponsors CRM, records their LinkedIn connections as warm routes, points them at map sharing, schedules their outreach run hourly (with their own CRM, its purpose, and task tracker if they keep them) and runs it once. Also use for "set me up for outreach", "install the outreach automation", "connect my Notion workspaces", or Evan's central setup of the watchdog and crawl.
 ---
 
 # Outreach setup
 
-Get one teammate from "plugin installed" to "my sponsor rows update every
-morning", in one sitting of about fifteen minutes, and leave a record that it
+Get one teammate from "plugin installed" to "my sponsor rows stay current
+every hour, with one digest each morning", in one sitting of about fifteen minutes, and leave a record that it
 worked. The full install guide is at
 https://prospecting.hscompute.com/settings/install; send them there for any
 step they would rather follow on their own.
@@ -151,7 +151,9 @@ Ask whether they keep their own CRM or task tracker in Notion that the daily
 run should keep current. For each one they name:
 
 1. Take the database's URL and the Composio account its workspace is
-   connected as (§4.1 step 3).
+   connected as (§4.1 step 3). For a CRM, also ask for its purpose in one
+   line ("investors I might raise from", "people to hire"): the run adds a
+   new lead to it only when the lead matches that line.
 2. Open it through that account with `NOTION_FETCH_DATABASE`, and tell them
    which existing columns the run will write: for a CRM, the ones meaning
    Last Contact, Next step, Next step date, Thread link, Suggested status and
@@ -162,18 +164,26 @@ run should keep current. For each one they name:
 
 Both go in their scheduled task (§4.5), never on the Rules page.
 
-### 4.5 Their daily run
+### 4.5 Their hourly run
 
-Create one scheduled task with this session's scheduling tool:
+Create one scheduled task with this session's scheduling tool, or, when they
+already have a `Daily outreach run · <first name>` task, change that one
+rather than adding a second:
 
 - Name: `Daily outreach run · <first name>`
-- Schedule: every day at a minute between 9:40 and 9:59 in their time zone
+- Schedule: hourly, cron `0 * * * *` — the top of every hour. The scheduler
+  spreads start times across the hour, so do not pick a minute yourself. Most
+  runs find nothing and stop after a few calls; the digest goes out once a
+  day, from the first run after 8am.
 - Prompt: `Run the daily-outreach-run skill for <name> (Notion users: <their
-  user ids>). Personal CRM: <database URL> (Composio account <name>). Task
+  user ids>). Personal CRM: <database URL> (Composio account <name>).
+  Personal CRM purpose: <one line>. Task
   tracker: <database URL> (Composio account <name>). They are not watching;
-  follow the skill exactly.` Leave out the Personal CRM or Task tracker
-  sentence when they have none.
-- Notifications on, so the digest reaches their phone.
+  follow the skill exactly.` Leave
+  out the Personal CRM sentences or the Task tracker sentence when they have
+  none.
+- Notifications on, so the digest and the "a sponsor is waiting on you"
+  messages reach their phone.
 
 If Beeper runs on their computer, the task should require that computer so
 chats are read; say so if the tool cannot set it, and tell them where to turn
@@ -194,7 +204,8 @@ needs Composio with `hsc` connected first (§4.1).
 1. **Watchdog** — the outreach-watchdog skill every four hours.
 2. **Crawl** — the warm-path-map skill on weekdays, requiring the computer
    whose Chrome holds Evan's LinkedIn session, so the crawl can open pages.
-3. **Lead scout** — the lead-scout skill weekly, Monday mornings.
+3. **Lead scout** — the lead-scout skill daily, each morning. When a weekly
+   task already exists, change its schedule rather than adding another.
 
 Then confirm the Run log's "Watchdog heartbeat" row updates after the first
 watchdog run.

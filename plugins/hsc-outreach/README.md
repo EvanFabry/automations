@@ -25,8 +25,10 @@ Notion connector.
 
 Say "set up my outreach", or run /outreach-setup, once. It checks your
 connectors, confirms you can see the CRM, records your LinkedIn connections as
-routes, schedules your daily outreach run and runs it once. After that, a
-digest arrives each morning.
+routes, schedules your outreach run hourly and runs it once. After that, your
+CRM rows stay current through the day, a digest arrives once each morning,
+and you hear in between only when a sponsor is waiting on you or a draft is
+ready.
 
 ## Data
 

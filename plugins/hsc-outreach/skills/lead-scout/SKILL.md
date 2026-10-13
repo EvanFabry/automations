@@ -1,12 +1,13 @@
 ---
 name: lead-scout
-description: Use to find new sponsor leads for the Haight Street Compute Market and add them to the Sponsors CRM for the team to approve — companies the team can already reach, plus recent AI-infrastructure news — screened against the Rules page and ranked by warmest route. Also use for "find more sponsors", "who else should we pitch", or the weekly lead scout run. Requires Notion through Composio (the HSC workspace connected as `hsc`) and the prospecting server.
+description: Use to find new sponsor leads for the Haight Street Compute Market and add them to the Sponsors CRM for the team to approve — companies the team can already reach, plus recent AI-infrastructure news — screened against the Rules page and ranked by warmest route. Also use for "find more sponsors", "who else should we pitch", or the daily lead scout run. Requires Notion through Composio (the HSC workspace connected as `hsc`) and the prospecting server.
 ---
 
 # Lead scout
 
-Add a short list of good new sponsor leads to the Sponsors CRM each week,
+Add a short list of good new sponsor leads to the Sponsors CRM each day,
 each with a reason and the warmest way in, for a person to approve or drop.
+Each lead is proposed once, ever (§3.1).
 
 ## 0. How to read this file
 
@@ -36,6 +37,9 @@ Rules page (§2). Read it first, every run.
 - **At most ten rows per run.** Fewer, better leads beat a long list.
 - **Public facts only in Notes.** One line on why, with a source link. Never
   a person's email address, phone number or anything from a private message.
+- **State holds keys, timestamps and IDs only.** What `put_state` stores
+  (§4.6) is §3.1 keys and dates: never a person's name, an email address, a
+  phone number or message text.
 
 ## 2. Locations
 
@@ -69,12 +73,37 @@ Rank by, in order: a warm route exists (`best_routes` tier 1–3); a recent
 reason to talk now (a raise, a capacity announcement, a datacenter deal in
 the last 60 days); fit with the sponsor screen.
 
+### 3.1 Same lead, same key
+
+The daily outreach run proposes leads too, from each owner's conversations,
+under this same rule, so the two jobs never propose one company twice.
+
+<!-- shared: lead-key — identical in daily-outreach-run and lead-scout; a test holds them equal -->
+A lead's key is its normalized name and, when known, its domain, written
+`<name>|<domain>`. Normalize a name by lowercasing it, turning "&" into
+"and", dropping punctuation and a leading "the", collapsing spaces, then
+dropping trailing words from this list until none is left at the end: inc,
+incorporated, llc, ltd, limited, corp, corporation, co, company, gmbh, plc,
+labs, ventures, technologies, group, holdings. The domain is the company's
+own web domain, lowercased, without "www." or a path; a free-mail domain
+(gmail.com, outlook.com, icloud.com, yahoo.com, proton.me) is no domain.
+
+Two leads are the same when their names match after normalizing, or their
+domains match. A lead is proposed once: skip it when it is the same as an
+entry in this job's state `seen.leads`, or as any row of the database it
+would be written to, under any status, Lost included. Look that database up
+before every write; state alone is not enough, because another job or a
+person may have added the row. After judging a lead, whether it was written
+or screened out, add `{ key, at }` to `seen.leads`, keeping the newest 500.
+<!-- /shared: lead-key -->
+
 ## 4. Procedure
 
 ### 4.1 Read
 
-Through `hsc`: the Rules page, then every Sponsor name in the CRM (normalize
-case and drop suffixes like Inc, Labs or Ventures when comparing).
+`get_state`, job `lead-scout`: `{ "seen": { "leads": [ { "key", "at" } ] } }`,
+or null on the first run. Then, through `hsc`: the Rules page, and every row
+of the CRM under any Status, as §3.1 keys.
 
 ### 4.2 Candidates
 
@@ -86,8 +115,8 @@ case and drop suffixes like Inc, Labs or Ventures when comparing).
 
 ### 4.3 Screen
 
-Drop anything the Rules page excludes, anything already in the CRM, and
-anything you cannot say in one line why it fits §3.
+Drop anything the Rules page excludes, anything already in the CRM or in
+`seen.leads` (§3.1), and anything you cannot say in one line why it fits §3.
 
 ### 4.4 Routes
 
@@ -99,13 +128,22 @@ Call `best_routes` once with every remaining candidate. Keep the best ten by
 Create one CRM row per lead, through `hsc`: Sponsor (the company's name),
 Category, Status Lead, Priority (High when the route is tier 1–3, else
 Medium), Best route and Route holder from `best_routes` when there is one,
-and Notes: `Lead scout <date>: <why, one line> <source link>`.
+and Notes: `Lead scout <date>: <why, one line> <source link>`. Look the CRM
+up again just before each write (§3.1). Add every candidate judged in §4.3
+and §4.4, written or dropped, to `seen.leads`.
 
 ### 4.6 Log and report
 
-Write one Run log row through `hsc`: Run "Lead scout · <date>",
-Job "Lead scout", Result, Started, Finished, Next run due (8 days after
-Started), Rows touched, Summary, Error, Fix. Then post to `alerts` with
+`put_state` with `seen.leads` (newest 500) and `expected_updated_at` set to
+the `updated_at` that `get_state` returned. An answer starting "conflict:"
+means another run wrote first: call `get_state` again, merge `seen.leads` as
+the union by key, newest `at` kept, and retry once; if that also conflicts,
+log partial with Error "state conflict".
+
+Write one Run log row per day through `hsc`, finding it by title before
+creating it: Run "Lead scout · <date>", Job "Lead scout", Result, Started,
+Finished, Next run due (one day after Started), Rows touched, Summary,
+Error, Fix. Then post to `alerts` with
 `post_to_slack`: one line per lead (name, why, route), and "Give a lead an
 Account Owner to take it, or set Lost to drop it." End the run with the same
 lines.
