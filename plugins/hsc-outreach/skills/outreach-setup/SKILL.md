@@ -23,10 +23,11 @@ here.
 - **Credentials stay with their owner.** Never ask for, read back or store a
   password, token or app-specific password. Every connector and every
   Composio account is connected by the teammate, in their own settings.
-- **Never replace a connection.** Never disconnect a Composio account, and
-  never ask Composio to reconnect one that is active (`reinitiate_all`
-  replaces existing connections). A wrong or missing workspace is added as a
-  new account or renamed in Composio by the teammate.
+- **Never replace a connection.** Never remove a Composio account (the
+  `remove` action) or reconnect one that is active (`reinitiate_all`, where a
+  version still offers it, replaces existing connections). A wrong or missing
+  workspace is added as a new account, or relabelled with `rename`, which
+  changes only the name.
 - **The HSC workspace is the `hsc` account.** Read and write the Rules page,
   Sponsors CRM and Run log only through the Composio Notion account `hsc`
   (§2), never by search and never in another workspace.
@@ -89,17 +90,17 @@ workspace and the teammate's own workspaces side by side:
    Claude's custom connector dialog with the name and the URL
    (`https://connect.composio.dev/mcp`) filled in; they click Add, then sign
    in to Composio when asked.
-2. **Connect the HSC workspace as `hsc`**, first. Start a Notion connection
-   with `COMPOSIO_MANAGE_CONNECTIONS` and ask them to name it `hsc`. On
+2. **Connect the HSC workspace as `hsc`**, first. If `list` already shows a
+   Notion account that reaches the CRM, rename it to `hsc` (`rename`, its
+   `account_id`). Otherwise `add` a Notion connection with alias `hsc`. On
    Notion's consent screen they choose the Haight Street Compute workspace
    and give it the pages holding the Sponsors CRM, the Run log and the Rules
-   page. If the account did not take the name, they rename it to `hsc` in
-   Composio's dashboard.
+   page.
 3. **Connect their own workspaces**, one account each, under any name they
    will recognise (`personal`, `acme`) — only the ones the daily run should
-   keep current (§4.4). When the tool will not add a second Notion account
-   without replacing the first, they add it from Composio's dashboard
-   instead.
+   keep current (§4.4). Each `add` is a new account beside the others; if
+   Composio refuses for the account limit, they choose one they no longer
+   use and remove it themselves in Composio's dashboard (setup never does).
 4. **Remove the built-in Notion connector** in Claude (Customize → Connectors
    → Notion → Disconnect), so there is one Notion path and nothing reaches
    the CRM but `hsc`.
@@ -112,8 +113,8 @@ Then check each of the other connectors and name any that is missing.
 
 Query the Sponsors CRM through `hsc`. If it fails:
 
-- `hsc` reaches another workspace (§4.1 step 5): they rename that account in
-  Composio and connect the HSC workspace as `hsc`.
+- `hsc` reaches another workspace (§4.1 step 5): rename that account to a
+  name of their choosing (`rename`), then connect the HSC workspace as `hsc`.
 - `hsc` is the HSC workspace but the CRM is not found: Composio was not given
   the page. In Notion they open the CRM, then ••• → Connections → add
   Composio, and the same for the Rules page.

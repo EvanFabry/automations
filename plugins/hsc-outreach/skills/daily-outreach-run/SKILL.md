@@ -107,7 +107,7 @@ Composio, or correct the <parameter> in your scheduled task".
 below; a copy read from the repo says `unstamped`. Read it from this file's
 own text as you loaded it, never from another file in the plugin (§4.9).
 
-This plugin's version: `1cf85844`.
+This plugin's version: `e14da068`.
 
 ## 4. Procedure
 
