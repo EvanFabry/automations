@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "prospecting": {
+      "type": "http",
+      "url": "https://prospecting.hscompute.com/mcp"
+    },
+    "composio": {
+      "type": "http",
+      "url": "https://connect.composio.dev/mcp"
+    }
+  }
+}

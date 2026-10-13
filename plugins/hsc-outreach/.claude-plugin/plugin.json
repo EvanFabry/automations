@@ -1,0 +1,11 @@
+{
+  "name": "hsc-outreach",
+  "displayName": "HSC Sponsor Outreach",
+  "version": "1.0.0+60fb5c3b",
+  "description": "Sponsor outreach for the Haight Street Compute Market: daily CRM sync from your email, meetings and chats, warm routes across the team's network, and follow-up drafts you approve and send.",
+  "author": {
+    "name": "Haight Street Compute",
+    "url": "https://hscompute.com"
+  },
+  "license": "UNLICENSED"
+}
