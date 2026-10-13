@@ -15,10 +15,11 @@ In Claude Code:
 
     /plugin install hsc-outreach --marketplace EvanFabry/automations
 
-This plugin brings two connectors: prospecting (the HSC panel) and Composio,
-which replaces Claude's built-in Notion connector. Connect Notion through
-Composio once per workspace, labelling the shared HSC workspace exactly
-"hsc", then disconnect the built-in Notion connector.
+This plugin carries the skills. Add the two connectors it needs from the
+guide's links: HSC (this panel) and Composio, which replaces Claude's built-in
+Notion connector. Connect Notion through Composio, labelling the shared HSC
+workspace exactly "hsc", then disconnect the built-in
+Notion connector.
 
 ## Use it
 
