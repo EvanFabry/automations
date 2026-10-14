@@ -161,7 +161,7 @@ conflicts, log partial with Error "state conflict".
 below; a copy read from the repo says `unstamped`. Read it from this file's
 own text as you loaded it, never from another file in the plugin (§4.9).
 
-This plugin's version: `b3d8d763`.
+This plugin's version: `07c8c60b`.
 
 ## 4. Procedure
 

@@ -135,10 +135,9 @@ them with every Notion user they have. Add their row if it is missing.
 3. Ask them to link their address book at
    https://prospecting.hscompute.com/settings/contacts (Google, or iCloud for
    iPhone contacts with an app-specific password they create themselves). It
-   keeps itself in sync from then on. Only contacts that can be a route are
-   kept — a company, a LinkedIn profile, a work email at a company the team
-   tracks, or a name that is one of their own LinkedIn connections — never
-   numbers or addresses.
+   keeps itself in sync from then on. Every contact is kept, so a company
+   added later finds who they already know there; phone numbers are kept
+   encrypted for them alone, never email or street addresses.
 4. Ask for LinkedIn's data export (Settings → Data privacy → Get a copy of your
    data → Connections). When they attach `Connections.csv`, open a run
    (`record_run`, kind `contact-sync`) and send the rows to `record_contacts`
