@@ -34,7 +34,7 @@ not duplicate parameter lists.
   store. Nothing in this skill ever writes to LinkedIn.
 - **Stop if the `prospecting` tools are unavailable** and say so; this skill
   does nothing without them. Connect the server at
-  `https://prospecting.hscompute.com/settings/mcp` first.
+  `https://prospecting.hscompute.com/settings/install#connectors` first.
 
 ### 1.2 Browsing (job 1 only)
 
