@@ -179,16 +179,22 @@ rather than adding a second:
 - Prompt: `Run the daily-outreach-run skill for <name> (Notion users: <their
   user ids>). Personal CRM: <database URL> (Composio account <name>).
   Personal CRM purpose: <one line>. Task
-  tracker: <database URL> (Composio account <name>). They are not watching;
-  follow the skill exactly.` Leave
+  tracker: <database URL> (Composio account <name>). Beeper: on this
+  computer. They are not watching; follow the skill exactly.` Leave
   out the Personal CRM sentences or the Task tracker sentence when they have
-  none.
+  none, and the Beeper sentence when Beeper Desktop does not run on this
+  computer (its tools are in this session, §4.1).
+- **Require this computer: on.** Always, for every teammate. The run reads
+  Beeper and other desktop connectors only on the computer it was scheduled
+  from, and a run that wanders off it reads less without saying so.
 - Notifications on, so the digest and the "a sponsor is waiting on you"
   messages reach their phone.
 
-If Beeper runs on their computer, the task should require that computer so
-chats are read; say so if the tool cannot set it, and tell them where to turn
-on "Require this computer".
+Set "Require this computer" with the scheduling tool. If the tool cannot set
+it, or an existing task has it off, stop here: tell them to open the Claude
+desktop app's scheduled tasks, open `Daily outreach run · <first name>`, and
+turn on **Require this computer**, then wait until they say it is on. Do not
+start §4.6 until it is: setup is not done without it.
 
 ### 4.6 First run
 
@@ -202,9 +208,13 @@ Create, once, on Evan's account, and skip any that already exists. The
 watchdog and lead scout read and write the HSC workspace, so Evan's account
 needs Composio with `hsc` connected first (§4.1).
 
+Every one of them requires this computer (§4.5): set it, or stop until
+Evan has turned it on, for a task created now and for one that already
+exists.
+
 1. **Watchdog** — the outreach-watchdog skill every four hours.
-2. **Crawl** — the warm-path-map skill on weekdays, requiring the computer
-   whose Chrome holds Evan's LinkedIn session, so the crawl can open pages.
+2. **Crawl** — the warm-path-map skill on weekdays, on the computer whose
+   Chrome holds Evan's LinkedIn session, so the crawl can open pages.
 3. **Lead scout** — the lead-scout skill daily, each morning. When a weekly
    task already exists, change its schedule rather than adding another.
 

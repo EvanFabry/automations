@@ -121,6 +121,13 @@ Dates are America/Los_Angeles.
   matches personal leads against it; without it, §5.4 is skipped.
 - **Task tracker** (optional). The same: a Notion database URL and its
   Composio account.
+- **Beeper** (optional). The task says "Beeper: on this computer." when the
+  owner reads texts through Beeper Desktop. Then Beeper is expected: when its
+  tools are missing, the run is not on that computer, or Beeper is closed.
+  Carry on without it, count Beeper as a source that did not answer (§4.0,
+  §4.9), and log partial with Error "Beeper unreachable" and Fix "Open this
+  scheduled task in the Claude desktop app, turn on Require this computer,
+  and keep Beeper Desktop open".
 
 Without a Personal CRM, skip §4.7 and §5.4; without a Task tracker, skip §4.8. When one
 is named but its account is not connected or the database is not found
@@ -161,7 +168,7 @@ conflicts, log partial with Error "state conflict".
 below; a copy read from the repo says `unstamped`. Read it from this file's
 own text as you loaded it, never from another file in the plugin (§4.9).
 
-This plugin's version: `f044b304`.
+This plugin's version: `4e39cf0d`.
 
 ## 4. Procedure
 
@@ -181,7 +188,9 @@ since the last one:
    hourly run would reread that day every hour.
 3. Granola `list_meetings`: meetings that ended since the watermark.
 4. Beeper `search_chats`: chats with activity since the watermark — only
-   when Beeper's tools are present.
+   when Beeper's tools are present. When the task expects Beeper (§3) and
+   its tools are missing, Beeper did not answer, so this is not the idle
+   path.
 
 **New evidence** is a message, meeting or chat after the watermark that
 involves a CRM row's sponsor, a LinkedIn "accepted your invitation" email,
@@ -393,7 +402,7 @@ Then `put_state` (§3): `runLog` naming today's row with this run's Result,
 `rows` as §4.1 read them, `seen.leads` as §5 left it, and `lastDigest` set
 to today when this run sends the digest. Advance `watermark` to this run's
 start, and `lastSweep` too when this run was the sweep, only when every
-source answered (Gmail, Granola, and Beeper when present). When one was
+source answered (Gmail, Granola, and Beeper when present or expected). When one was
 unreachable, keep the old values, so the next run reads that window again
 rather than skipping what it could not see.
 
