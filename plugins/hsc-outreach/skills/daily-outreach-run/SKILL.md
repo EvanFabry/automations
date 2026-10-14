@@ -92,9 +92,10 @@ named `hsc`. Select it on every call: run Notion tools through
 never as a Notion tool called on its own, which may not carry the account.
 `NOTION_GET_PAGE_MARKDOWN` reads the Rules page, `NOTION_QUERY_DATA_SOURCE`
 reads rows by data source ID, `NOTION_UPDATE_ROW_DATABASE` changes a row by
-its page ID, and `NOTION_INSERT_ROW_DATABASE` adds one by database ID. Check
-arguments with `COMPOSIO_GET_TOOL_SCHEMAS`, except for the two Run log calls
-§4.0 pins, which keep the idle path within its budget; if a slug is gone,
+its page ID, and `NOTION_INSERT_ROW_DATABASE` adds one by database ID. Every
+property value is a string, a number too: Rows touched is `"3"`, never `3`.
+Check arguments with `COMPOSIO_GET_TOOL_SCHEMAS`, except for the two Run log
+calls §4.0 pins, which keep the idle path within its budget; if a slug is gone,
 find its replacement with `COMPOSIO_SEARCH_TOOLS`. A personal database (§3) is reached
 the same way, with its own account in place of `hsc`.
 
@@ -168,7 +169,7 @@ conflicts, log partial with Error "state conflict".
 below; a copy read from the repo says `unstamped`. Read it from this file's
 own text as you loaded it, never from another file in the plugin (§4.9).
 
-This plugin's version: `4e39cf0d`.
+This plugin's version: `4c6823ed`.
 
 ## 4. Procedure
 
@@ -211,7 +212,7 @@ every call above answered, the run makes exactly these calls and stops:
      Only those two: an idle run leaves Result, Error and Fix as the last
      real run wrote them, so a failure stays visible to the watchdog.
    - Otherwise `NOTION_INSERT_ROW_DATABASE` creates today's row, with
-     `{ "database_id": "64efc12133db449187e39aae74145619", "properties": [ { "name": "Run", "type": "title", "value": "Daily outreach run · <owner> · <date>" }, { "name": "Job", "type": "select", "value": "Daily outreach run" }, { "name": "Owner", "type": "people", "value": "<owner's Notion user ids, comma-separated>" }, { "name": "Started", "type": "date", "value": "<this run's start>" }, { "name": "Finished", "type": "date", "value": "<now>" }, { "name": "Next run due", "type": "date", "value": "<this run's start + 1 hour>" }, { "name": "Result", "type": "select", "value": "<runLog.result, or ok>" }, { "name": "Rows touched", "type": "number", "value": 0 } ] }`.
+     `{ "database_id": "64efc12133db449187e39aae74145619", "properties": [ { "name": "Run", "type": "title", "value": "Daily outreach run · <owner> · <date>" }, { "name": "Job", "type": "select", "value": "Daily outreach run" }, { "name": "Owner", "type": "people", "value": "<owner's Notion user ids, comma-separated>" }, { "name": "Started", "type": "date", "value": "<this run's start>" }, { "name": "Finished", "type": "date", "value": "<now>" }, { "name": "Next run due", "type": "date", "value": "<this run's start + 1 hour>" }, { "name": "Result", "type": "select", "value": "<runLog.result, or ok>" }, { "name": "Rows touched", "type": "number", "value": "0" } ] }`.
      State is the lookup here, because every run that creates the row
      records it in state. The Owner ids are the Notion users the task names.
 

@@ -6,8 +6,9 @@ there, not here.
 
 ## Add it
 
-In Claude: Customize → Plugins → Add marketplace → `EvanFabry/automations`,
-turn on Sync automatically, then install **hsc-outreach**.
+In Claude: Customize → Plugins → Add marketplace, and paste
+`https://github.com/EvanFabry/automations`. It shows up as **hsc**. Turn on Sync
+automatically, then install **hsc-outreach**.
 
 In Claude Code:
 

@@ -48,7 +48,8 @@ named `hsc`. Select it on every call: run Notion tools through
 never as a Notion tool called on its own, which may not carry the account.
 `NOTION_QUERY_DATA_SOURCE` reads rows by data source ID,
 `NOTION_UPDATE_ROW_DATABASE` changes a row by its page ID, and
-`NOTION_INSERT_ROW_DATABASE` adds one by database ID. Check arguments with
+`NOTION_INSERT_ROW_DATABASE` adds one by database ID. Every property value is
+a string, a number too: Rows touched is `"0"`, never `0`. Check arguments with
 `COMPOSIO_GET_TOOL_SCHEMAS`; if a slug is gone, find its replacement with
 `COMPOSIO_SEARCH_TOOLS`.
 

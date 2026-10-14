@@ -32,8 +32,10 @@ here.
   Sponsors CRM and Run log only through the Composio Notion account `hsc`
   (§2), never by search and never in another workspace.
 - **Their data only.** Edit only the teammate's own row on the Rules page's
-  Owners table, their own scheduled task, and their own map's contacts. Never
-  change another person's CRM rows, task or share. Their own CRM and task
+  Owners table (a "Not yet named" row waiting for them becomes theirs),
+  Account Owner on CRM rows nobody owns that they claim (§4.2), their own
+  scheduled task, and their own map's contacts and sharing. Never change
+  another person's CRM rows, task or share. Their own CRM and task
   tracker go in their scheduled task, never on the Rules page, and setup only
   reads them.
 - **A LinkedIn export never leaves this conversation whole.** Record only each
@@ -58,9 +60,11 @@ is the account named `hsc`. Select it on every call: run Notion tools through
 never as a Notion tool called on its own, which may not carry the account.
 `NOTION_QUERY_DATA_SOURCE` reads rows by data source ID, `NOTION_WHO_AM_I`
 names the workspace an account reaches, `NOTION_LIST_USERS` lists its people,
-and `NOTION_FETCH_DATABASE` shows a database's columns. Check arguments with
-`COMPOSIO_GET_TOOL_SCHEMAS`; if a slug is gone, find its replacement with
-`COMPOSIO_SEARCH_TOOLS`.
+`NOTION_FETCH_DATABASE` shows a database's columns, and
+`NOTION_UPDATE_ROW_DATABASE` changes a row by its page ID. Every property
+value is a string, a number too: `"0"`, never `0`; people are comma-separated
+user ids. Check arguments with `COMPOSIO_GET_TOOL_SCHEMAS`; if a slug is gone,
+find its replacement with `COMPOSIO_SEARCH_TOOLS`.
 
 ## 3. Modes
 
@@ -70,8 +74,16 @@ and `NOTION_FETCH_DATABASE` shows a database's columns. Check arguments with
 ## 4. Teammate setup
 
 Do the steps in order and keep a checklist in the conversation. A step that
-needs the teammate's hands — connecting something, sharing a page — is theirs;
-say exactly where to click, then wait and re-check rather than moving on.
+needs the teammate's hands — connecting something, signing in, sharing a page,
+typing a password — is theirs; say exactly where to click, then wait and
+re-check rather than moving on.
+
+**Ask once.** As soon as §4.2 can read the CRM, ask every question below in
+one round (one AskUserQuestion when this session has it), leaving out any
+the conversation has already answered: which sponsors are theirs (§4.2),
+whether to share their map (§4.3), their own CRM or task tracker and its
+purpose (§4.4), and whether they text sponsors, so Beeper is read (§4.5).
+After that, stop only for their hands.
 
 ### 4.1 Connectors
 
@@ -98,12 +110,15 @@ workspace and the teammate's own workspaces side by side:
    page.
 3. **Connect their own workspaces**, one account each, under any name they
    will recognise (`personal`, `acme`) — only the ones the daily run should
-   keep current (§4.4). Each `add` is a new account beside the others; if
+   keep current (§4.4). Until they have answered that, come back to this step
+   after the questions (§4). Each `add` is a new account beside the others; if
    Composio refuses for the account limit, they choose one they no longer
    use and remove it themselves in Composio's dashboard (setup never does).
 4. **Remove the built-in Notion connector** in Claude (Customize → Connectors
    → Notion → Disconnect), so there is one Notion path and nothing reaches
-   the CRM but `hsc`.
+   the CRM but `hsc`. Leave it connected when another of their scheduled
+   tasks uses Notion (read their task list): these skills reach Notion only
+   through Composio either way.
 5. **Check** that `NOTION_WHO_AM_I` through `hsc` names the HSC workspace,
    then go on to §4.2.
 
@@ -123,15 +138,43 @@ Query the Sponsors CRM through `hsc`. If it fails:
 
 Then find their Notion user id (from rows where they are Account Owner, or
 with `NOTION_LIST_USERS` through `hsc`) and make sure the Owners table lists
-them with every Notion user they have. Add their row if it is missing.
+them with every Notion user they have. Its columns are Person, Notion
+accounts and Notes; a "Not yet named" row holds sponsors ("Owner of …") for
+someone outside the workspace.
+
+**Their sponsors.** Offer as choices the CRM rows that have no Account Owner
+and that no Owners row holds, listing them in the question when there are
+more than fit, and ask whether they are the person a "Not yet named" row is
+waiting for. Set them as Account Owner (`NOTION_UPDATE_ROW_DATABASE` through
+`hsc`, type `people`) on the rows they pick and on the unowned rows their
+"Not yet named" row holds. Never change a row that has an owner: a co-owner,
+or a row they say is theirs that someone else owns, is for them and that
+owner to settle.
+
+**Their Owners row.** Add one if it is missing; when a "Not yet named" row
+is theirs, fill that row instead: their name under Person, their Notion users
+under Notion accounts, and its "Owner of …" line moved to Notes. Composio's
+Notion tools cannot write a table row, so find the table and its rows with
+`NOTION_FETCH_BLOCK_CONTENTS` through `hsc`, then use the Notion API from
+`COMPOSIO_REMOTE_WORKBENCH` (`proxy_execute`). The proxy cannot pick an
+account and uses the default one, so first
+`GET /v1/blocks/<Owners table block id>` through it; if that fails, it is
+reaching another workspace: ask them to make the edit in Notion by hand. A
+new row is `PATCH /v1/blocks/<Owners table block id>/children` with one
+`table_row` — a cell for each column, filled like the rows above it, the
+second mentioning their Notion user — and `after` set to the last named
+person's row, so it stays above the "Not yet named" rows. A filled row is
+`PATCH /v1/blocks/<its block id>` with its new cells.
 
 ### 4.3 Their network
 
 1. Call `whoami` on the prospecting connector and confirm it names them.
 2. Ask whether they will share their warm-path map with the event team. If
-   yes, send them to https://prospecting.hscompute.com/settings/sharing to
-   grant each teammate by name. Sharing is read-only, and teammates see their
-   contacts only where they match a sponsor.
+   yes, each teammate they name is granted by name at
+   https://prospecting.hscompute.com/settings/sharing: do it in the browser
+   when this session has one and they asked you to, otherwise send them
+   there. Sharing is read-only, and teammates see their contacts only where
+   they match a sponsor.
 3. Ask them to link their address book at
    https://prospecting.hscompute.com/settings/contacts (Google, or iCloud for
    iPhone contacts with an app-specific password they create themselves). It
@@ -200,7 +243,9 @@ start §4.6 until it is: setup is not done without it.
 
 Run the daily-outreach-run skill now for them, as a backfill. It writes their
 first Run log row; check through `hsc` that the row exists. End with what got
-set up, what is still theirs to do, and their first digest.
+set up, what is still theirs to do, and their first digest. When
+`post_to_slack` answers `posted: false` because Slack is not configured, that
+is not a failure: give the digest here, and name Slack as an admin's fix.
 
 ## 5. Central setup (Evan only)
 

@@ -57,8 +57,9 @@ named `hsc`. Select it on every call: run Notion tools through
 never as a Notion tool called on its own, which may not carry the account.
 `NOTION_GET_PAGE_MARKDOWN` reads the Rules page, `NOTION_QUERY_DATA_SOURCE`
 reads rows by data source ID, and `NOTION_INSERT_ROW_DATABASE` adds one by
-database ID. Check arguments with `COMPOSIO_GET_TOOL_SCHEMAS`; if a slug is
-gone, find its replacement with `COMPOSIO_SEARCH_TOOLS`.
+database ID. Every property value is a string, a number too: Rows touched is
+`"3"`, never `3`. Check arguments with `COMPOSIO_GET_TOOL_SCHEMAS`; if a slug
+is gone, find its replacement with `COMPOSIO_SEARCH_TOOLS`.
 
 ## 3. What a good lead is
 
