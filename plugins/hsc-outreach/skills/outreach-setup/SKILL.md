@@ -30,7 +30,9 @@ here.
   changes only the name.
 - **The HSC workspace is the `hsc` account.** Read and write the Rules page,
   Sponsors CRM and Run log only through the Composio Notion account `hsc`
-  (§2), never by search and never in another workspace.
+  (§2), never by search and never in another workspace. The one exception is
+  the Owners row, which §4.2 writes through Composio's workbench proxy once
+  its check shows the proxy reaches the HSC workspace.
 - **Their data only.** Edit only the teammate's own row on the Rules page's
   Owners table (a "Not yet named" row waiting for them becomes theirs),
   Account Owner on CRM rows nobody owns that they claim (§4.2), their own
@@ -57,7 +59,8 @@ here.
 workspace.** The HSC workspace, which holds the Rules page, CRM and Run log,
 is the account named `hsc`. Select it on every call: run Notion tools through
 `COMPOSIO_MULTI_EXECUTE_TOOL` with `account: "hsc"` on each item in `tools`,
-never as a Notion tool called on its own, which may not carry the account.
+never as a Notion tool called on its own, which may not carry the account
+(the Owners row in §4.2 is the one write that cannot, and checks instead).
 `NOTION_QUERY_DATA_SOURCE` reads rows by data source ID, `NOTION_WHO_AM_I`
 names the workspace an account reaches, `NOTION_LIST_USERS` lists its people,
 `NOTION_FETCH_DATABASE` shows a database's columns, and
@@ -93,7 +96,7 @@ After that, stop only for their hands.
 | Gmail | status from email, and drafts — required |
 | prospecting (hscompute.com) | routes and recorded contacts — required |
 | Granola | meeting notes — recommended |
-| Beeper (desktop app, on their computer) | texts and WhatsApp — recommended |
+| Beeper (desktop app, on their computer) | texts and WhatsApp — only if they text sponsors (§4) |
 
 Notion goes through Composio for everyone, so one run can reach the HSC
 workspace and the teammate's own workspaces side by side:
@@ -142,18 +145,20 @@ them with every Notion user they have. Its columns are Person, Notion
 accounts and Notes; a "Not yet named" row holds sponsors ("Owner of …") for
 someone outside the workspace.
 
-**Their sponsors.** Offer as choices the CRM rows that have no Account Owner
-and that no Owners row holds, listing them in the question when there are
-more than fit, and ask whether they are the person a "Not yet named" row is
-waiting for. Set them as Account Owner (`NOTION_UPDATE_ROW_DATABASE` through
-`hsc`, type `people`) on the rows they pick and on the unowned rows their
-"Not yet named" row holds. Never change a row that has an owner: a co-owner,
+**Their sponsors.** Offer as choices, in the one question about sponsors,
+the CRM rows that have no Account Owner and that no Owners row holds, plus
+each "Not yet named" row as a choice of its own ("I'm the owner of Fidelity,
+Rho Bank, …"), listing them in the question when there are more than fit.
+Set them as Account Owner (`NOTION_UPDATE_ROW_DATABASE` through `hsc`, type
+`people`) on the rows they pick and, when they pick a "Not yet named" row,
+on the unowned rows it holds. Never change a row that has an owner: a co-owner,
 or a row they say is theirs that someone else owns, is for them and that
 owner to settle.
 
 **Their Owners row.** Add one if it is missing; when a "Not yet named" row
 is theirs, fill that row instead: their name under Person, their Notion users
-under Notion accounts, and its "Owner of …" line moved to Notes. Composio's
+under Notion accounts, and its "Owner of …" line moved to Notes in place of
+"Outside the workspace; add their name here". Composio's
 Notion tools cannot write a table row, so find the table and its rows with
 `NOTION_FETCH_BLOCK_CONTENTS` through `hsc`, then use the Notion API from
 `COMPOSIO_REMOTE_WORKBENCH` (`proxy_execute`). The proxy cannot pick an
@@ -181,7 +186,8 @@ person's row, so it stays above the "Not yet named" rows. A filled row is
    keeps itself in sync from then on. Every contact is kept, so a company
    added later finds who they already know there; phone numbers are kept
    encrypted for them alone, never email or street addresses.
-4. Ask for LinkedIn's data export (Settings → Data privacy → Get a copy of your
+4. Unless an export is already requested or LinkedIn's email has come, ask
+   for LinkedIn's data export (Settings → Data privacy → Get a copy of your
    data → Connections). When they attach `Connections.csv`, open a run
    (`record_run`, kind `contact-sync`) and send the rows to `record_contacts`
    in batches of up to 500: source `linkedin`, channel `linkedin_connection`,
@@ -225,8 +231,10 @@ rather than adding a second:
   tracker: <database URL> (Composio account <name>). Beeper: on this
   computer. They are not watching; follow the skill exactly.` Leave
   out the Personal CRM sentences or the Task tracker sentence when they have
-  none, and the Beeper sentence when Beeper Desktop does not run on this
-  computer (its tools are in this session, §4.1).
+  none. The Beeper sentence follows their answer (§4): "Beeper: on this
+  computer." when they text sponsors and Beeper's tools are in this session
+  (§4.1), "Beeper: off." when they do not, and none when they do but Beeper
+  Desktop is not on this computer yet.
 - **Require this computer: on.** Always, for every teammate. The run reads
   Beeper and other desktop connectors only on the computer it was scheduled
   from, and a run that wanders off it reads less without saying so.
