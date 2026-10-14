@@ -161,7 +161,7 @@ conflicts, log partial with Error "state conflict".
 below; a copy read from the repo says `unstamped`. Read it from this file's
 own text as you loaded it, never from another file in the plugin (§4.9).
 
-This plugin's version: `6a5e8219`.
+This plugin's version: `b3d8d763`.
 
 ## 4. Procedure
 
@@ -422,7 +422,11 @@ End with a digest for the owner, at most 15 lines: overdue next steps, stalled
 threads with drafts waiting or suggested messages (§4.6), suggested status
 changes to confirm, missing connections (the owner's rows with no Best route
 and nobody in Numbers held by, naming the Suggested contact to promote into
-Primary contact when there is one), the sponsor leads §5.3 added since the
+Primary contact when there is one), people the team knows outside LinkedIn
+at the owner's sponsors (one `known_contacts` call when the prospecting
+server is connected; for each of the owner's rows with no Primary contact,
+the people listed at that sponsor with who knows them — "Lambda: Kai Ito, in
+Babur's contacts" — at most three lines, never a number), the sponsor leads §5.3 added since the
 last digest, anything needing their decision, and, when §4.7, §4.8 or §5.4
 ran, "<n> personal rows updated, <m> tasks created or updated, <k> personal
 leads added". Never quote
