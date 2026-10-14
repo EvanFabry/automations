@@ -109,7 +109,12 @@ of the CRM under any Status, as §3.1 keys.
 
 1. **From the map.** `list_companies` (follow `nextCursor` to the end):
    companies with a 1st-degree contact or a decision-maker, not in the CRM.
-2. **From the news.** Search for the last 60 days of AI-infrastructure news:
+2. **From the team's contacts.** `known_contacts` (follow `nextCursor` to
+   the end): companies where someone on the team already knows people from
+   an address book or a conversation — often companies nobody has crawled
+   (`inMap: false`) — not in the CRM. A known person is the warmest start a
+   lead can have; §4.3 still drops any that do not fit §3.
+3. **From the news.** Search for the last 60 days of AI-infrastructure news:
    funding rounds, GPU cloud capacity, datacenter financings and leases.
    Keep companies, not people.
 
