@@ -93,7 +93,7 @@ After that, stop only for their hands.
 | Connector | Needed for |
 | --- | --- |
 | Composio, with the HSC Notion workspace as `hsc` | the CRM, Rules page and Run log — required |
-| Gmail | status from email, and drafts — required |
+| Gmail, with Google's "Manage drafts and send emails" permission | status from email, and drafts — required |
 | prospecting (hscompute.com) | routes and recorded contacts — required |
 | Granola | meeting notes — recommended |
 | Beeper (desktop app, on their computer) | texts and WhatsApp — only if they text sponsors (§4) |
@@ -121,11 +121,25 @@ workspace and the teammate's own workspaces side by side:
    → Notion → Disconnect), so there is one Notion path and nothing reaches
    the CRM but `hsc`. Leave it connected when another of their scheduled
    tasks uses Notion (read their task list): these skills reach Notion only
-   through Composio either way.
+   through Composio either way. A task whose prompt pastes an old copy of a
+   skill instead of naming it reads the CRM through the built-in connector:
+   that task is a duplicate to turn off first (§4.5), not a reason to keep
+   the connector.
 5. **Check** that `NOTION_WHO_AM_I` through `hsc` names the HSC workspace,
    then go on to §4.2.
 
 Then check each of the other connectors and name any that is missing.
+
+**Gmail drafts.** The run writes drafts, so Gmail needs Google's "Manage
+drafts and send emails" permission, which Google's consent screen offers as a
+checkbox that can be left unticked. Reading the mailbox works without it, so
+a read proves nothing, and setup never creates a draft to test it. When they
+connect Gmail, or when a run has logged a refused draft (daily-outreach-run
+§4.6), tell them: in Claude, Customize → Connectors → Gmail → Disconnect; at
+https://myaccount.google.com/connections remove Claude, so Google asks for
+every permission again; then connect Gmail and tick "Manage drafts and send
+emails" before continuing. The run never sends: the permission's name covers
+both.
 
 ### 4.2 The CRM
 
@@ -173,20 +187,19 @@ person's row, so it stays above the "Not yet named" rows. A filled row is
 
 ### 4.3 Their network
 
-1. Call `whoami` on the prospecting connector and confirm it names them.
-2. Ask whether they will share their warm-path map with the event team. If
+1. Ask whether they will share their warm-path map with the event team. If
    yes, each teammate they name is granted by name at
    https://prospecting.hscompute.com/settings/sharing: do it in the browser
    when this session has one and they asked you to, otherwise send them
    there. Sharing is read-only, and teammates see their contacts only where
    they match a sponsor.
-3. Ask them to link their address book at
+2. Ask them to link their address book at
    https://prospecting.hscompute.com/settings/contacts (Google, or iCloud for
    iPhone contacts with an app-specific password they create themselves). It
    keeps itself in sync from then on. Every contact is kept, so a company
    added later finds who they already know there; phone numbers are kept
    encrypted for them alone, never email or street addresses.
-4. Unless an export is already requested or LinkedIn's email has come, ask
+3. Unless an export is already requested or LinkedIn's email has come, ask
    for LinkedIn's data export (Settings → Data privacy → Get a copy of your
    data → Connections). When they attach `Connections.csv`, open a run
    (`record_run`, kind `contact-sync`) and send the rows to `record_contacts`
@@ -241,6 +254,14 @@ rather than adding a second:
 - Notifications on, so the digest and the "a sponsor is waiting on you"
   messages reach their phone.
 
+**One task.** Read their task list before creating or changing anything.
+When more than one task is named `Daily outreach run · <first name>`, or one
+still runs once a day with a pasted copy of the skill in its prompt instead
+of the line above, keep the hourly one, change it as above, and tell them to
+turn the others off in the desktop app's scheduled tasks. Turning a task off
+or deleting it is theirs to do. A duplicate left on writes a second Run log
+row every day and drafts from an older copy of the procedure.
+
 Set "Require this computer" with the scheduling tool. If the tool cannot set
 it, or an existing task has it off, stop here: tell them to open the Claude
 desktop app's scheduled tasks, open `Daily outreach run · <first name>`, and
@@ -257,19 +278,65 @@ is not a failure: give the digest here, and name Slack as an admin's fix.
 
 ## 5. Central setup (Evan only)
 
-Create, once, on Evan's account, and skip any that already exists. The
-watchdog and lead scout read and write the HSC workspace, so Evan's account
-needs Composio with `hsc` connected first (§4.1).
+Create, once, on Evan's account, and skip any that already exists under any
+name. The watchdog and lead scout read and write the HSC workspace, so
+Evan's account needs Composio with `hsc` connected first (§4.1). Read his
+task list first: a second copy of a central task, or an old one whose prompt
+pastes a copy of a skill, is his to turn off (§4.5).
 
 Every one of them requires this computer (§4.5): set it, or stop until
 Evan has turned it on, for a task created now and for one that already
-exists.
+exists. Each has notifications on. Where a task below already exists with a
+different prompt, change the prompt to the one here; for a task that
+requires a computer, that change takes effect only when approved from a
+conversation linked to that computer.
 
-1. **Watchdog** — the outreach-watchdog skill every four hours.
+1. **Watchdog** — the outreach-watchdog skill every four hours. Name
+   `Outreach watchdog`, cron `0 */4 * * *` (the scheduler picks the minute).
+   Prompt:
+
+   ```text
+   Run the outreach-watchdog skill for the HSC outreach automation (central job, set up by Evan). Read and write the Run log only through the Composio Notion account "hsc", and update the "Watchdog heartbeat" row as the skill describes. Evan is not watching; follow the skill exactly.
+   ```
+
 2. **Crawl** — the warm-path-map skill on weekdays, on the computer whose
-   Chrome holds Evan's LinkedIn session, so the crawl can open pages.
+   Chrome holds Evan's LinkedIn session, so the crawl can open pages. Name
+   `Warm-path crawl · weekdays`, cron
+   `CRON_TZ=America/Los_Angeles 0 9 * * 1-5`. Prompt:
+
+   ```text
+   You are a scheduled weekday task for Evan (evan@foreach.do is this claude account, evan@hscompute.com is the account at hscompute.com). Your job: work ALL outstanding warm-path-map queues using the warm-path-map skill. Evan has given standing authorization for every job the skill defines (seeding, fund research, company scans, fund-page scans, mutual enumeration, corrections, panel views) — but the skill's own safety and pacing rules (its §1 and §5.1) override everything in this prompt. Never use pacing overrides to go faster, and never click anything on LinkedIn other than what the skill permits.
+
+   TIMING (all times America/Los_Angeles):
+   1. This task fires at 9:00am PT. Before doing any work, draw a random integer 0–3600 (e.g. python3 -c "import random; print(random.randint(0,3600))") and sleep that many seconds (in chunks of ≤9 minutes), so the real start is uniformly random between 9:00 and 10:00am PT.
+   2. At start, also draw a random stop time uniformly between 7:00pm and 8:00pm PT. Plan the day so you stop opening new page work with enough margin to finish cleanly by that time: send correct statuses (partial for anything unfinished — never a terminal status just to drain the queue), call run_summary, and write your report.
+
+   PREFLIGHT:
+   3. Verify the prospecting MCP tools are available. If they are not, STOP and report that — do nothing else.
+   4. Check whether Claude-in-Chrome browser tools are reachable (they come through Evan's desktop app bridge). If they are NOT available, do only the non-browser work: fund portfolio research off LinkedIn, import_targets/import_funds seeding, and corrections if collection queues are empty. Report clearly that browser scanning was skipped and why.
+   5. If the browser IS available, run the skill's preflight search (§5.3) before working any batch. Untrustworthy reads (empty/placeholder results, challenges, interstitials, login walls, layout drift) END the run per the skill: send partial where applicable, call run_summary, report what the page showed, and stop. Do not adapt around obstacles or retry beyond what the skill allows.
+
+   WORK:
+   6. Invoke the warm-path-map skill and follow it exactly. Ask next_work { kind: "all" } and work the queues in cascade order: research_fund, scan_company, enumerate_mutuals, then scan_fund_page (Evan has standing authorization for fund-page scans; pass fund on those ingests only). Open a run with record_run and pass its run_id to every ingest. Ingest after EACH company, never batched at the end.
+   7. Never mix correction work into a collection pass. Only if all collection queues are empty, run one correction pass (find_suspect_entries → inspect before acting → smallest true correction). Never merge_people or delete_entry unless the evidence is unambiguous; if unsure, leave it and note it in the report.
+   8. If the Chrome extension disconnects, follow the skill's recovery steps (sleep 30, retry tabs_context up to 4×, re-ask next_work under the same run_id; use list_runs if the run_id is lost).
+
+   WRAP-UP:
+   9. Before the stop time: run_summary, then report — companies scanned, cards seen, mutuals named, dropped counts (call out any non-zero droppedNoUrl as an incomplete pass), what remains in next_work, any companies left with the expansion button still showing, and anything you stopped on.
+
+   Evan is not present during this run. Never wait for input. Any judgement the skill reserves for the user (e.g. resuming after an untrustworthy read) means: stop and report, not decide.
+   ```
+
 3. **Lead scout** — the lead-scout skill daily, each morning. When a weekly
-   task already exists, change its schedule rather than adding another.
+   task already exists, change its schedule rather than adding another. Name
+   `Lead scout`, cron `CRON_TZ=America/Los_Angeles 50 9 * * *`: after 9am,
+   when the computer it requires is awake. Prompt:
+
+   ```text
+   Run the lead-scout skill for the daily lead scout run (central job, set up by Evan). Use the Composio Notion account "hsc" for the Rules page and Sponsors CRM, and the HSC prospecting connector for routes. Evan is not watching; follow the skill exactly.
+   ```
 
 Then confirm the Run log's "Watchdog heartbeat" row updates after the first
-watchdog run.
+watchdog run. Wait for its first scheduled run rather than starting one: it
+posts what it finds to the alerts channel, and nothing goes to that channel
+without Evan's yes, a test message included.
