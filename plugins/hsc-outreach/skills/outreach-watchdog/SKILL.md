@@ -70,9 +70,10 @@ the day's earlier problems; those are history, not a current problem.
   starts across the hour, so a single late or skipped run is noise; two
   hours past due means at least two runs in a row did not happen. Daily jobs
   get the same grace.
-- **Overnight:** a Daily outreach run may need its owner's computer, which
-  sleeps at night. When its Next run due falls between 8pm and 8am, it is
-  missed only from 10am, once the morning's runs have had their chance.
+- **Overnight:** every outreach task requires its computer (outreach-setup
+  §4.5 and §5), which may sleep at night. When a job's Next run due falls
+  between 8pm and 8am, it is missed only from 10am, once the morning's runs
+  have had their chance.
   A missed Daily outreach run's Fix is "Check that your Daily outreach run
   task is scheduled hourly (rerun /outreach-setup if it is still daily) and
   that its computer is awake": a task still on its old daily schedule runs

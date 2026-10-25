@@ -171,7 +171,7 @@ conflicts, log partial with Error "state conflict".
 below; a copy read from the repo says `unstamped`. Read it from this file's
 own text as you loaded it, never from another file in the plugin (§4.9).
 
-This plugin's version: `f5e3371b`.
+This plugin's version: `7d0c9140`.
 
 ## 4. Procedure
 
@@ -194,7 +194,8 @@ since the last one:
    when Beeper's tools are present and the task does not say "Beeper: off."
    (§3). When the task expects Beeper (§3) and
    its tools are missing, Beeper did not answer, so this is not the idle
-   path.
+   path. Give Beeper its time in UTC, ending in Z: it refuses an offset such
+   as `-07:00` with a 400.
 
 **New evidence** is a message, meeting or chat after the watermark that
 involves a CRM row's sponsor, a LinkedIn "accepted your invitation" email,
@@ -226,7 +227,7 @@ every call above answered, the run makes exactly these calls and stops:
    `runLog` naming today's row (its `result` unchanged).
 
 Then end with exactly `No changes.` and nothing else: no Rules page, no CRM
-query, no other Notion write, no `post_to_slack`, no `whoami`. That is six
+query, no other Notion write, no `post_to_slack`. That is six
 calls at most, five without Beeper. Only three things may add calls:
 
 - a "conflict:" answer from `put_state` (§3's retry: two calls);
@@ -266,7 +267,8 @@ found:
 - **Beeper**, only when its tools are present and the task does not say
   "Beeper: off." (§3). `search_messages` matches
   literal words, so search one distinctive word: the sponsor's name, then the
-  contact's first name.
+  contact's first name. It needs a query, and it ignores a date filter, so
+  keep only the messages dated after Since yourself.
 
 Skip unrelated namesakes (an "Index" that is not Index Ventures). A row with
 nothing since Since keeps its Last Contact column, which is what §4.4's
@@ -339,6 +341,14 @@ For each stalled row where a draft would move it forward:
 5. When the live conversation is a text or WhatsApp chat, there is nothing to
    draft into. Put a one-line suggested message in the digest instead, for
    the owner to send themselves.
+6. When Gmail refuses `create_draft` (a missing permission, or an approval
+   nobody is there to give), do not retry it or write the draft another way.
+   Put the draft's gist in the row's Next step and in the digest, and log
+   partial (§4.9) with Error "Gmail refused the draft: <its error>" and Fix
+   "Reconnect Gmail in Customize → Connectors, tick 'Manage drafts and send
+   emails' on Google's screen, and set Gmail's draft tools to Always allow
+   under its Tool permissions". Logged as ok, a refused draft never reaches
+   the watchdog.
 
 ### 4.7 Personal CRM
 
@@ -395,7 +405,7 @@ find by title, then create, and never retry it. On creation write Run
 "Daily outreach run · <owner> · <date>", Job "Daily outreach run", Owner and
 Started (this run's start; the day's first run). On every run write Finished
 (now), Next run due (one hour after this run started), Result (ok; partial
-when a source was unreachable; failed when the run could not finish), Rows
+when a source was unreachable or a draft was refused, §4.6; failed when the run could not finish), Rows
 touched (Sponsors CRM rows, added to the day's total), Summary (this run,
 one line), Error, and Fix (what a person should do, such as "Reconnect Gmail
 in Claude settings"). Times are ISO 8601 with an offset or Z, as in §4.0.
@@ -418,16 +428,18 @@ naming the sponsor and what is needed, never quoting the message. Otherwise
 post nothing. End the run with those lines, or one line on what changed.
 
 **The digest**, once a day, from the first run at or after 8am (§4.0). If the
-Run log row titled "Watchdog heartbeat" has a Next run due in the past, say
-so first in the digest: the watchdog itself has stopped.
+Run log row titled "Watchdog heartbeat" has a Next run due more than 2 hours
+in the past, say so first in the digest: the watchdog itself has stopped.
+A Next run due between 8pm and 8am does not count: the watchdog requires its
+computer, which may sleep overnight, and its first morning run catches up.
 
-Then the owner's own setup, when the prospecting server is connected. Call
-`whoami` once:
+Then the owner's own setup, when the prospecting server is connected, from
+the `get_state` answer §4.0 read:
 
 - **Plugin.** Compare its `plugin_version` with the version in §3 — the
   "This plugin's version" line of this file. When they differ, add "Update
   your outreach plugin — https://prospecting.hscompute.com/settings/install#plugin".
-  When the line says `unstamped`, or `whoami` has no `plugin_version`, say
+  When the line says `unstamped`, or that answer has no `plugin_version`, say
   nothing: there is nothing to compare.
 - **Setup.** When its `whats_new` is dated on or after the day of the last
   digest (state `lastDigest`), add

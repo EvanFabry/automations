@@ -13,7 +13,12 @@ https://prospecting.hscompute.com/settings/install
 It installs from the EvanFabry/automations marketplace, which keeps it current.
 In Claude Code:
 
-    /plugin install hsc-outreach --marketplace EvanFabry/automations
+    /plugin marketplace add EvanFabry/automations
+    /plugin install hsc-outreach@hsc
+
+To update: `claude plugin marketplace update hsc`, then
+`claude plugin update hsc-outreach@hsc`. In the Claude app,
+Customize → Plugins → Check for updates, or turn on Sync automatically.
 
 This plugin carries the skills. Add the two connectors it needs from the
 guide's links: HSC (this panel) and Composio, which replaces Claude's built-in
