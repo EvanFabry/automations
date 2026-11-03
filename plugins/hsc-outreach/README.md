@@ -13,13 +13,18 @@ https://prospecting.hscompute.com/settings/install
 It installs from the EvanFabry/automations marketplace, which keeps it current.
 In Claude Code:
 
-    /plugin install hsc-outreach --marketplace EvanFabry/automations
+    /plugin marketplace add EvanFabry/automations
+    /plugin install hsc-outreach@hsc
+
+To update: `claude plugin marketplace update hsc`, then
+`claude plugin update hsc-outreach@hsc`. In the Claude app,
+Customize → Plugins → Check for updates, or turn on Sync automatically.
 
 This plugin carries the skills. Add the two connectors it needs from the
-guide's links: HSC (this panel) and Composio, which replaces Claude's built-in
-Notion connector. Connect Notion through Composio, labelling the shared HSC
-workspace exactly "hsc", then disconnect the built-in
-Notion connector.
+guide's links: HSC (this panel) and Composio. Connect Notion through
+Composio, labelling the shared HSC workspace exactly
+"hsc", and your Gmail. Keep Claude's own Notion and Gmail
+connectors: the runs use them when Composio can't be reached.
 
 ## Use it
 
@@ -32,9 +37,9 @@ ready.
 
 ## Data
 
-Claude reads your Gmail, Granola and (on your computer) Beeper inside your own
-account, and Notion through your own Composio account, which holds that
-connection. The prospecting connector at
+Claude reads Granola and (on your computer) Beeper inside your own account,
+and Notion and Gmail through your own Composio account, which holds those
+connections, or Claude's own connectors when Composio can't be reached. The prospecting connector at
 prospecting.hscompute.com stores who you are in touch with — name, company,
 channel and date, never message text, phone numbers or email addresses —
 visible to you, and to teammates you share your map with only where it matches

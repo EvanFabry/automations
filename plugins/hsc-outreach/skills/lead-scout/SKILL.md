@@ -1,6 +1,6 @@
 ---
 name: lead-scout
-description: Use to find new sponsor leads for the Haight Street Compute Market and add them to the Sponsors CRM for the team to approve — companies the team can already reach, plus recent AI-infrastructure news — screened against the Rules page and ranked by warmest route. Also use for "find more sponsors", "who else should we pitch", or the daily lead scout run. Requires Notion through Composio (the HSC workspace connected as `hsc`) and the prospecting server.
+description: Use to find new sponsor leads for the Haight Street Compute Market and add them to the Sponsors CRM for the team to approve — companies the team can already reach, plus recent AI-infrastructure news — screened against the Rules page and ranked by warmest route. Also use for "find more sponsors", "who else should we pitch", or the daily lead scout run. Requires Notion, through Composio (the HSC workspace connected as `hsc`) or Claude's Notion connector as the fallback, and the prospecting server.
 ---
 
 # Lead scout
@@ -21,10 +21,11 @@ Rules page (§2). Read it first, every run.
   only post is this run's summary to the team (§4.6).
 - **Do-not-contact and the sponsor screen are absolute.** Never add, research
   further or route through anyone the Rules page excludes.
-- **Only the `hsc` account.** Read and write Notion only through the Composio
-  Notion account `hsc` (§2), never by search, and never in another workspace:
-  a person's own CRM or task tracker is never touched. If `hsc` cannot be
-  selected, or the Sponsors CRM is not found through it, stop: log the run
+- **Only the HSC workspace, by its IDs.** Read and write Notion only by the
+  IDs in §2: through the Composio Notion account `hsc`, or Claude's Notion
+  connector when Composio cannot be used (§2) — never by search, and never
+  in another workspace: a person's own CRM or task tracker is never touched.
+  If neither path reaches the Sponsors CRM, stop: log the run
   failed with Fix "Connect the HSC Notion workspace in Composio as `hsc`".
   When the Run log is what cannot be reached, end with that Fix in the post
   instead.
@@ -50,16 +51,44 @@ Rules page (§2). Read it first, every run.
 | Run log | collection://9c977f46-c7b2-4126-9357-781d56a057f4 | data source `9c977f46-c7b2-4126-9357-781d56a057f4`, database `64efc12133db449187e39aae74145619` |
 | Warm-path map | the `prospecting` MCP server (prospecting.hscompute.com) | |
 
-**Notion goes through the Composio connector, one connected account per
-workspace.** The HSC workspace, which holds everything above, is the account
-named `hsc`. Select it on every call: run Notion tools through
-`COMPOSIO_MULTI_EXECUTE_TOOL` with `account: "hsc"` on each item in `tools`,
-never as a Notion tool called on its own, which may not carry the account.
-`NOTION_GET_PAGE_MARKDOWN` reads the Rules page, `NOTION_QUERY_DATA_SOURCE`
-reads rows by data source ID, and `NOTION_INSERT_ROW_DATABASE` adds one by
-database ID. Every property value is a string, a number too: Rows touched is
-`"3"`, never `3`. Check arguments with `COMPOSIO_GET_TOOL_SCHEMAS`; if a slug
-is gone, find its replacement with `COMPOSIO_SEARCH_TOOLS`.
+<!-- shared: notion-paths — identical in every outreach skill; a test holds them equal -->
+**Notion goes through Composio first, and Claude's Notion connector when
+Composio cannot be used.** Composio holds one connected account per
+workspace; the HSC workspace, which holds the pages above, is the account
+named `hsc`. Run Notion tools through `COMPOSIO_MULTI_EXECUTE_TOOL` with
+`account: "hsc"` on each item in `tools` (a personal database's own account
+in its place), never as a Notion tool called on its own, which may not carry
+the account. Every property value is a string, a number too: `"3"`, never
+`3`. Check arguments with `COMPOSIO_GET_TOOL_SCHEMAS`; if a slug is gone,
+find its replacement with `COMPOSIO_SEARCH_TOOLS`.
+
+**The fallback.** When Composio cannot be used for a call — its tools are
+missing, the account is not connected, or the call fails for anything but
+its arguments — make that call once through Claude's Notion connector, by
+the same page URL or `collection://` URL, and never by search. An ID
+resolves only in its own workspace, so the connector reaches a page only
+when it is connected to that page's workspace, and otherwise fails instead
+of writing elsewhere. A write that went through one path is never repeated
+through the other. Each step, Composio's tool first:
+
+| Step | Composio | Claude's Notion connector |
+| --- | --- | --- |
+| Read a page | `NOTION_GET_PAGE_MARKDOWN`, by page ID | `notion-fetch`, by its URL |
+| A database's columns | `NOTION_FETCH_DATABASE`, by database ID | `notion-fetch`, by its `collection://` URL |
+| Read rows | `NOTION_QUERY_DATA_SOURCE` by data source ID, or `NOTION_QUERY_DATABASE_WITH_FILTER` by database ID | `notion-query-data-sources`, rows mode, its `collection://` URL as `data_source_url` and a filter |
+| Change a row | `NOTION_UPDATE_ROW_DATABASE`, by page ID | `notion-update-page`, command `update_properties` |
+| Add a row | `NOTION_INSERT_ROW_DATABASE`, by database ID | `notion-create-pages`, the data source as parent |
+| Name the workspace | `NOTION_WHO_AM_I` | `notion-get-self` |
+| List its people | `NOTION_LIST_USERS` | `notion-get-users` |
+
+The connector takes each value in its own type — a number as a number, a
+date under its property name — as its tool's description says. Its rows
+mode returns at most 100 rows and no cursor, so filter to what the step
+needs; outside Notion's Business and Enterprise plans it also spends a
+usage allowance, which is why it is the fallback. When neither path
+reaches the HSC workspace, the Fix is "Connect the HSC Notion workspace in
+Composio as `hsc`".
+<!-- /shared: notion-paths -->
 
 ## 3. What a good lead is
 

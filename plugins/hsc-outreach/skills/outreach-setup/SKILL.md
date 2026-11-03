@@ -1,6 +1,6 @@
 ---
 name: outreach-setup
-description: Use to set up a teammate for HSC sponsor outreach, or when someone runs /outreach-setup — connects Notion through Composio (the shared HSC workspace as `hsc`, plus any workspace of their own), checks their other connectors, confirms they can see the Sponsors CRM, records their LinkedIn connections as warm routes, points them at map sharing, schedules their outreach run hourly (with their own CRM, its purpose, and task tracker if they keep them) and runs it once. Also use for "set me up for outreach", "install the outreach automation", "connect my Notion workspaces", or Evan's central setup of the watchdog and crawl.
+description: Use to set up a teammate for HSC sponsor outreach, or when someone runs /outreach-setup — connects Notion and Gmail through Composio first (the shared HSC workspace as `hsc`, plus any workspace of their own), with Claude's own connectors as the fallback, checks their other connectors, confirms they can see the Sponsors CRM, records their LinkedIn connections as warm routes, points them at map sharing, schedules their outreach run hourly (with their own CRM, its purpose, and task tracker if they keep them) and runs it once. Also use for "set me up for outreach", "install the outreach automation", "connect my Notion workspaces", or Evan's central setup of the watchdog and crawl.
 ---
 
 # Outreach setup
@@ -28,11 +28,13 @@ here.
   version still offers it, replaces existing connections). A wrong or missing
   workspace is added as a new account, or relabelled with `rename`, which
   changes only the name.
-- **The HSC workspace is the `hsc` account.** Read and write the Rules page,
-  Sponsors CRM and Run log only through the Composio Notion account `hsc`
-  (§2), never by search and never in another workspace. The one exception is
-  the Owners row, which §4.2 writes through Composio's workbench proxy once
-  its check shows the proxy reaches the HSC workspace.
+- **The HSC workspace is reached by its IDs.** Read and write the Rules
+  page, Sponsors CRM and Run log only by the IDs in §2: through the Composio
+  Notion account `hsc`, or Claude's Notion connector when Composio cannot be
+  used (§2) — never by search and never in another workspace. The one
+  exception is the Owners row, which §4.2 writes through Composio's
+  workbench proxy once its check shows the proxy reaches the HSC workspace,
+  or through Claude's Notion connector by the Rules page's URL.
 - **Their data only.** Edit only the teammate's own row on the Rules page's
   Owners table (a "Not yet named" row waiting for them becomes theirs),
   Account Owner on CRM rows nobody owns that they claim (§4.2), their own
@@ -55,19 +57,47 @@ here.
 | Composio connector | https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Composio&connectorUrl=https%3A%2F%2Fconnect.composio.dev%2Fmcp | |
 | Install guide | https://prospecting.hscompute.com/settings/install | |
 
-**Notion goes through the Composio connector, one connected account per
-workspace.** The HSC workspace, which holds the Rules page, CRM and Run log,
-is the account named `hsc`. Select it on every call: run Notion tools through
-`COMPOSIO_MULTI_EXECUTE_TOOL` with `account: "hsc"` on each item in `tools`,
-never as a Notion tool called on its own, which may not carry the account
-(the Owners row in §4.2 is the one write that cannot, and checks instead).
-`NOTION_QUERY_DATA_SOURCE` reads rows by data source ID, `NOTION_WHO_AM_I`
-names the workspace an account reaches, `NOTION_LIST_USERS` lists its people,
-`NOTION_FETCH_DATABASE` shows a database's columns, and
-`NOTION_UPDATE_ROW_DATABASE` changes a row by its page ID. Every property
-value is a string, a number too: `"0"`, never `0`; people are comma-separated
-user ids. Check arguments with `COMPOSIO_GET_TOOL_SCHEMAS`; if a slug is gone,
+<!-- shared: notion-paths — identical in every outreach skill; a test holds them equal -->
+**Notion goes through Composio first, and Claude's Notion connector when
+Composio cannot be used.** Composio holds one connected account per
+workspace; the HSC workspace, which holds the pages above, is the account
+named `hsc`. Run Notion tools through `COMPOSIO_MULTI_EXECUTE_TOOL` with
+`account: "hsc"` on each item in `tools` (a personal database's own account
+in its place), never as a Notion tool called on its own, which may not carry
+the account. Every property value is a string, a number too: `"3"`, never
+`3`. Check arguments with `COMPOSIO_GET_TOOL_SCHEMAS`; if a slug is gone,
 find its replacement with `COMPOSIO_SEARCH_TOOLS`.
+
+**The fallback.** When Composio cannot be used for a call — its tools are
+missing, the account is not connected, or the call fails for anything but
+its arguments — make that call once through Claude's Notion connector, by
+the same page URL or `collection://` URL, and never by search. An ID
+resolves only in its own workspace, so the connector reaches a page only
+when it is connected to that page's workspace, and otherwise fails instead
+of writing elsewhere. A write that went through one path is never repeated
+through the other. Each step, Composio's tool first:
+
+| Step | Composio | Claude's Notion connector |
+| --- | --- | --- |
+| Read a page | `NOTION_GET_PAGE_MARKDOWN`, by page ID | `notion-fetch`, by its URL |
+| A database's columns | `NOTION_FETCH_DATABASE`, by database ID | `notion-fetch`, by its `collection://` URL |
+| Read rows | `NOTION_QUERY_DATA_SOURCE` by data source ID, or `NOTION_QUERY_DATABASE_WITH_FILTER` by database ID | `notion-query-data-sources`, rows mode, its `collection://` URL as `data_source_url` and a filter |
+| Change a row | `NOTION_UPDATE_ROW_DATABASE`, by page ID | `notion-update-page`, command `update_properties` |
+| Add a row | `NOTION_INSERT_ROW_DATABASE`, by database ID | `notion-create-pages`, the data source as parent |
+| Name the workspace | `NOTION_WHO_AM_I` | `notion-get-self` |
+| List its people | `NOTION_LIST_USERS` | `notion-get-users` |
+
+The connector takes each value in its own type — a number as a number, a
+date under its property name — as its tool's description says. Its rows
+mode returns at most 100 rows and no cursor, so filter to what the step
+needs; outside Notion's Business and Enterprise plans it also spends a
+usage allowance, which is why it is the fallback. When neither path
+reaches the HSC workspace, the Fix is "Connect the HSC Notion workspace in
+Composio as `hsc`".
+<!-- /shared: notion-paths -->
+
+People are comma-separated user ids. The Owners row in §4.2 is the one write
+that cannot carry an account, and checks instead.
 
 ## 3. Modes
 
@@ -85,21 +115,23 @@ re-check rather than moving on.
 one round (one AskUserQuestion when this session has it), leaving out any
 the conversation has already answered: which sponsors are theirs (§4.2),
 whether to share their map (§4.3), their own CRM or task tracker and its
-purpose (§4.4), and whether they text sponsors, so Beeper is read (§4.5).
+purpose (§4.4), whether they text sponsors, so Beeper is read (§4.5), and
+which mailboxes the run reads, when §4.1's Gmail step leaves that open.
 After that, stop only for their hands.
 
 ### 4.1 Connectors
 
 | Connector | Needed for |
 | --- | --- |
-| Composio, with the HSC Notion workspace as `hsc` | the CRM, Rules page and Run log — required |
-| Gmail | status from email, and drafts — required |
+| Composio, with the HSC Notion workspace as `hsc`, and their Gmail with Google's "Manage drafts and send emails" permission | the CRM, Rules page and Run log; status from email, and drafts — required |
+| Claude's Notion and Gmail connectors | the fallback when Composio cannot be used — recommended |
 | prospecting (hscompute.com) | routes and recorded contacts — required |
 | Granola | meeting notes — recommended |
 | Beeper (desktop app, on their computer) | texts and WhatsApp — only if they text sponsors (§4) |
 
-Notion goes through Composio for everyone, so one run can reach the HSC
-workspace and the teammate's own workspaces side by side:
+Notion goes through Composio first for everyone, so one run can reach the
+HSC workspace and the teammate's own workspaces side by side, and through
+Claude's Notion connector when Composio cannot be used (§2):
 
 1. **Add Composio.** Send them to the Composio connector link (§2). It opens
    Claude's custom connector dialog with the name and the URL
@@ -117,15 +149,59 @@ workspace and the teammate's own workspaces side by side:
    after the questions (§4). Each `add` is a new account beside the others; if
    Composio refuses for the account limit, they choose one they no longer
    use and remove it themselves in Composio's dashboard (setup never does).
-4. **Remove the built-in Notion connector** in Claude (Customize → Connectors
-   → Notion → Disconnect), so there is one Notion path and nothing reaches
-   the CRM but `hsc`. Leave it connected when another of their scheduled
-   tasks uses Notion (read their task list): these skills reach Notion only
-   through Composio either way.
+4. **Keep Claude's Notion connector as the fallback.** Never disconnect
+   it. It reaches one workspace; when they use it, it should be the HSC
+   one, so the runs can still reach the CRM when Composio cannot. Its calls
+   go by ID (§2), so a connector on another workspace fails rather than
+   writing there. A task whose prompt pastes an old copy of a skill instead
+   of naming it is a duplicate to turn off (§4.5).
 5. **Check** that `NOTION_WHO_AM_I` through `hsc` names the HSC workspace,
-   then go on to §4.2.
+   and, when Claude's Notion connector is connected, whether `notion-fetch`
+   of the Sponsors CRM's `collection://` URL answers through it, then go on
+   to §4.2. A connector that does not reach the CRM is not an error: it is
+   only no fallback for the HSC pages.
 
 Then check each of the other connectors and name any that is missing.
+
+**Gmail: Composio first, the connector as the fallback.** The run reads
+and drafts through Gmail in Composio, and falls back to Claude's Gmail
+connector for a mailbox only when the connector is signed in to that same
+mailbox (daily-outreach-run §2). Both are written into the task (§4.5).
+
+- **Composio.** List the Gmail accounts (`COMPOSIO_MANAGE_CONNECTIONS`,
+  `list`): each shows its address, and its alias once it has one. For the
+  mailbox they talk to sponsors from, when it is not there yet, `add` a
+  Gmail connection with an alias they will recognise (`work`, `personal`)
+  and give them the sign-in link; a mailbox already there with no alias
+  gets one with `rename`. Ask which mailboxes the run reads when there is
+  more than one.
+- **The connector**, when its tools are in this session: find its address
+  from the From header of one sent message (`search_threads` for
+  `in:sent newer_than:30d`, then `get_thread`). When it is one of the
+  mailboxes the run reads, it is that mailbox's fallback. A connector on
+  another mailbox is no fallback; leave it be.
+- **No Gmail in Composio and they would rather not add it:** the connector
+  alone ("Gmail: connector.", §4.5).
+
+Never remove a Gmail account or reconnect an active one (§1). Check each
+chosen mailbox with one read — `GMAIL_LIST_THREADS` through its account, or
+`search_threads` for a connector-only task, for `newer_than:1d` — and name
+a mailbox that does not answer.
+
+**Gmail drafts.** The run writes drafts, so Gmail needs Google's "Manage
+drafts and send emails" permission, which Google's consent screen offers as a
+checkbox that can be left unticked. Reading the mailbox works without it, so
+a read proves nothing, and setup never creates a draft to test it. When they
+connect Gmail in Composio, tell them to tick every permission on Google's
+screen; after a refused draft (daily-outreach-run §4.6), `add` the mailbox
+again under a new alias, allowing every permission, point the task's Gmail
+sentence at it, and let them remove the old account in Composio's
+dashboard themselves. For the connector the same holds: in Claude,
+Customize → Connectors → Gmail → Disconnect; at
+https://myaccount.google.com/connections remove Claude, so Google asks for
+every permission again; then connect Gmail and tick "Manage drafts and send
+emails" before continuing. Composio's dashboard themselves. The run never
+sends: the permission's name covers both.
 
 ### 4.2 The CRM
 
@@ -164,7 +240,11 @@ Notion tools cannot write a table row, so find the table and its rows with
 `COMPOSIO_REMOTE_WORKBENCH` (`proxy_execute`). The proxy cannot pick an
 account and uses the default one, so first
 `GET /v1/blocks/<Owners table block id>` through it; if that fails, it is
-reaching another workspace: ask them to make the edit in Notion by hand. A
+reaching another workspace: when Claude's Notion connector reaches the HSC
+workspace (§4.1 step 5), make the same edit with `notion-update-page`
+(command `update_content`) on the Rules page's URL, changing only their
+row's line of the table after a fresh `notion-fetch`; otherwise ask them to
+make the edit in Notion by hand. A
 new row is `PATCH /v1/blocks/<Owners table block id>/children` with one
 `table_row` — a cell for each column, filled like the rows above it, the
 second mentioning their Notion user — and `after` set to the last named
@@ -173,20 +253,19 @@ person's row, so it stays above the "Not yet named" rows. A filled row is
 
 ### 4.3 Their network
 
-1. Call `whoami` on the prospecting connector and confirm it names them.
-2. Ask whether they will share their warm-path map with the event team. If
+1. Ask whether they will share their warm-path map with the event team. If
    yes, each teammate they name is granted by name at
    https://prospecting.hscompute.com/settings/sharing: do it in the browser
    when this session has one and they asked you to, otherwise send them
    there. Sharing is read-only, and teammates see their contacts only where
    they match a sponsor.
-3. Ask them to link their address book at
+2. Ask them to link their address book at
    https://prospecting.hscompute.com/settings/contacts (Google, or iCloud for
    iPhone contacts with an app-specific password they create themselves). It
    keeps itself in sync from then on. Every contact is kept, so a company
    added later finds who they already know there; phone numbers are kept
    encrypted for them alone, never email or street addresses.
-4. Unless an export is already requested or LinkedIn's email has come, ask
+3. Unless an export is already requested or LinkedIn's email has come, ask
    for LinkedIn's data export (Settings → Data privacy → Get a copy of your
    data → Connections). When they attach `Connections.csv`, open a run
    (`record_run`, kind `contact-sync`) and send the rows to `record_contacts`
@@ -226,12 +305,20 @@ rather than adding a second:
   runs find nothing and stop after a few calls; the digest goes out once a
   day, from the first run after 8am.
 - Prompt: `Run the daily-outreach-run skill for <name> (Notion users: <their
-  user ids>). Personal CRM: <database URL> (Composio account <name>).
+  user ids>). Gmail: Composio account <alias> (<address>). Connector
+  fallback: <address>.
+  Personal CRM: <database URL> (Composio account <name>).
   Personal CRM purpose: <one line>. Task
   tracker: <database URL> (Composio account <name>). Beeper: on this
   computer. They are not watching; follow the skill exactly.` Leave
   out the Personal CRM sentences or the Task tracker sentence when they have
-  none. The Beeper sentence follows their answer (§4): "Beeper: on this
+  none. The Gmail sentence follows §4.1's Gmail step: "Gmail: Composio
+  account <alias> (<address>)." with every mailbox the run reads,
+  comma-separated, such as "Gmail: Composio account work (riley@acme.com),
+  personal (riley@gmail.com).", then "Connector fallback: <address>." when
+  Claude's Gmail connector is signed in to one of them; "Gmail: connector."
+  only when they keep no Gmail in Composio.
+  The Beeper sentence follows their answer (§4): "Beeper: on this
   computer." when they text sponsors and Beeper's tools are in this session
   (§4.1), "Beeper: off." when they do not, and none when they do but Beeper
   Desktop is not on this computer yet.
@@ -240,6 +327,14 @@ rather than adding a second:
   from, and a run that wanders off it reads less without saying so.
 - Notifications on, so the digest and the "a sponsor is waiting on you"
   messages reach their phone.
+
+**One task.** Read their task list before creating or changing anything.
+When more than one task is named `Daily outreach run · <first name>`, or one
+still runs once a day with a pasted copy of the skill in its prompt instead
+of the line above, keep the hourly one, change it as above, and tell them to
+turn the others off in the desktop app's scheduled tasks. Turning a task off
+or deleting it is theirs to do. A duplicate left on writes a second Run log
+row every day and drafts from an older copy of the procedure.
 
 Set "Require this computer" with the scheduling tool. If the tool cannot set
 it, or an existing task has it off, stop here: tell them to open the Claude
@@ -257,19 +352,65 @@ is not a failure: give the digest here, and name Slack as an admin's fix.
 
 ## 5. Central setup (Evan only)
 
-Create, once, on Evan's account, and skip any that already exists. The
-watchdog and lead scout read and write the HSC workspace, so Evan's account
-needs Composio with `hsc` connected first (§4.1).
+Create, once, on Evan's account, and skip any that already exists under any
+name. The watchdog and lead scout read and write the HSC workspace, so
+Evan's account needs Composio with `hsc` connected first (§4.1). Read his
+task list first: a second copy of a central task, or an old one whose prompt
+pastes a copy of a skill, is his to turn off (§4.5).
 
 Every one of them requires this computer (§4.5): set it, or stop until
 Evan has turned it on, for a task created now and for one that already
-exists.
+exists. Each has notifications on. Where a task below already exists with a
+different prompt, change the prompt to the one here; for a task that
+requires a computer, that change takes effect only when approved from a
+conversation linked to that computer.
 
-1. **Watchdog** — the outreach-watchdog skill every four hours.
+1. **Watchdog** — the outreach-watchdog skill every four hours. Name
+   `Outreach watchdog`, cron `0 */4 * * *` (the scheduler picks the minute).
+   Prompt:
+
+   ```text
+   Run the outreach-watchdog skill for the HSC outreach automation (central job, set up by Evan). Read and write the Run log only through the Composio Notion account "hsc", or Claude's Notion connector when Composio cannot be used, as the skill describes, and update the "Watchdog heartbeat" row as the skill describes. Evan is not watching; follow the skill exactly.
+   ```
+
 2. **Crawl** — the warm-path-map skill on weekdays, on the computer whose
-   Chrome holds Evan's LinkedIn session, so the crawl can open pages.
+   Chrome holds Evan's LinkedIn session, so the crawl can open pages. Name
+   `Warm-path crawl · weekdays`, cron
+   `CRON_TZ=America/Los_Angeles 0 9 * * 1-5`. Prompt:
+
+   ```text
+   You are a scheduled weekday task for Evan (evan@foreach.do is this claude account, evan@hscompute.com is the account at hscompute.com). Your job: work ALL outstanding warm-path-map queues using the warm-path-map skill. Evan has given standing authorization for every job the skill defines (seeding, fund research, company scans, fund-page scans, mutual enumeration, corrections, panel views) — but the skill's own safety and pacing rules (its §1 and §5.1) override everything in this prompt. Never use pacing overrides to go faster, and never click anything on LinkedIn other than what the skill permits.
+
+   TIMING (all times America/Los_Angeles):
+   1. This task fires at 9:00am PT. Before doing any work, draw a random integer 0–3600 (e.g. python3 -c "import random; print(random.randint(0,3600))") and sleep that many seconds (in chunks of ≤9 minutes), so the real start is uniformly random between 9:00 and 10:00am PT.
+   2. At start, also draw a random stop time uniformly between 7:00pm and 8:00pm PT. Plan the day so you stop opening new page work with enough margin to finish cleanly by that time: send correct statuses (partial for anything unfinished — never a terminal status just to drain the queue), call run_summary, and write your report.
+
+   PREFLIGHT:
+   3. Verify the prospecting MCP tools are available. If they are not, STOP and report that — do nothing else.
+   4. Check whether Claude-in-Chrome browser tools are reachable (they come through Evan's desktop app bridge). If they are NOT available, do only the non-browser work: fund portfolio research off LinkedIn, import_targets/import_funds seeding, and corrections if collection queues are empty. Report clearly that browser scanning was skipped and why.
+   5. If the browser IS available, run the skill's preflight search (§5.3) before working any batch. Untrustworthy reads (empty/placeholder results, challenges, interstitials, login walls, layout drift) END the run per the skill: send partial where applicable, call run_summary, report what the page showed, and stop. Do not adapt around obstacles or retry beyond what the skill allows.
+
+   WORK:
+   6. Invoke the warm-path-map skill and follow it exactly. Ask next_work { kind: "all" } and work the queues in cascade order: research_fund, scan_company, enumerate_mutuals, then scan_fund_page (Evan has standing authorization for fund-page scans; pass fund on those ingests only). Open a run with record_run and pass its run_id to every ingest. Ingest after EACH company, never batched at the end.
+   7. Never mix correction work into a collection pass. Only if all collection queues are empty, run one correction pass (find_suspect_entries → inspect before acting → smallest true correction). Never merge_people or delete_entry unless the evidence is unambiguous; if unsure, leave it and note it in the report.
+   8. If the Chrome extension disconnects, follow the skill's recovery steps (sleep 30, retry tabs_context up to 4×, re-ask next_work under the same run_id; use list_runs if the run_id is lost).
+
+   WRAP-UP:
+   9. Before the stop time: run_summary, then report — companies scanned, cards seen, mutuals named, dropped counts (call out any non-zero droppedNoUrl as an incomplete pass), what remains in next_work, any companies left with the expansion button still showing, and anything you stopped on.
+
+   Evan is not present during this run. Never wait for input. Any judgement the skill reserves for the user (e.g. resuming after an untrustworthy read) means: stop and report, not decide.
+   ```
+
 3. **Lead scout** — the lead-scout skill daily, each morning. When a weekly
-   task already exists, change its schedule rather than adding another.
+   task already exists, change its schedule rather than adding another. Name
+   `Lead scout`, cron `CRON_TZ=America/Los_Angeles 50 9 * * *`: after 9am,
+   when the computer it requires is awake. Prompt:
+
+   ```text
+   Run the lead-scout skill for the daily lead scout run (central job, set up by Evan). Use the Composio Notion account "hsc" for the Rules page and Sponsors CRM, or Claude's Notion connector when Composio cannot be used, as the skill describes, and the HSC prospecting connector for routes. Evan is not watching; follow the skill exactly.
+   ```
 
 Then confirm the Run log's "Watchdog heartbeat" row updates after the first
-watchdog run.
+watchdog run. Wait for its first scheduled run rather than starting one: it
+posts what it finds to the alerts channel, and nothing goes to that channel
+without Evan's yes, a test message included.

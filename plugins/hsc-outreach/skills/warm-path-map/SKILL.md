@@ -52,15 +52,12 @@ not duplicate parameter lists.
   firing at once is exactly the burst a per-action pause exists to prevent.
 - **Never trigger a browser dialog** — it blocks all further automation.
 
-## 2. Ownership — confirm before any write
+## 2. Ownership
 
-Call `whoami` and **state the email it returned in your first message**:
-
-> Collecting as <email from whoami>
-
-Every write is attributed to that owner, and each admin's map is separate:
-degree and mutuals are relative to *their* LinkedIn account. If the email is
-not the person who asked, stop and say so.
+Every write goes to the map of the admin the `prospecting` connector is
+signed in as, and each admin's map is separate: degree and mutuals are
+relative to *their* LinkedIn account. The connector's sign-in decides the
+owner; there is nothing to call to confirm it before working.
 
 This matters most for corrections. A collection run written to the wrong map
 adds rows a re-run reconciles; a delete written to the wrong map removes rows

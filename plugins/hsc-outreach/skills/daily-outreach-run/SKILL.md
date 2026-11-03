@@ -1,6 +1,6 @@
 ---
 name: daily-outreach-run
-description: Use to run the hourly sponsor outreach sync for one owner — check their Gmail, Granola and Beeper for anything new since the last run (stopping cheaply when there is nothing), update Last Contact, Next step, Thread link, Best route and Suggested status on the Sponsors CRM rows they own, record who they talked to as warm routes, draft follow-ups for stalled threads, propose new leads into the right CRM, keep their own Notion CRM and task tracker current when their task names them, send one digest a day, and log the run. Also use for "sync my sponsors", "update the CRM from my email", "update my task tracker", "backfill sponsor statuses" or "what's stalled". Requires Notion through Composio (the HSC workspace connected as `hsc`) and Gmail; uses Granola, Beeper and the prospecting server (hscompute.com) when connected.
+description: Use to run the hourly sponsor outreach sync for one owner — check their Gmail, Granola and Beeper for anything new since the last run (stopping cheaply when there is nothing), update Last Contact, Next step, Thread link, Best route and Suggested status on the Sponsors CRM rows they own, record who they talked to as warm routes, draft follow-ups for stalled threads, propose new leads into the right CRM, keep their own Notion CRM and task tracker current when their task names them, send one digest a day, and log the run. Also use for "sync my sponsors", "update the CRM from my email", "update my task tracker", "backfill sponsor statuses" or "what's stalled". Requires Notion and Gmail, each through Composio first (the HSC workspace connected as `hsc`) and Claude's own connector as the fallback; uses Granola, Beeper and the prospecting server (hscompute.com) when connected.
 ---
 
 # Daily outreach run
@@ -27,7 +27,10 @@ task tracker — is set in their scheduled task (§3), never on the Rules page.
 ## 1. Safety — non-negotiable
 
 - **Never send.** Write Gmail drafts only. Never call a tool that sends email,
-  texts, WhatsApp, iMessage or LinkedIn messages. The only posts a run makes
+  texts, WhatsApp, iMessage or LinkedIn messages. Through Composio that rules
+  out GMAIL_SEND_EMAIL, GMAIL_SEND_DRAFT, GMAIL_FORWARD_MESSAGE and
+  GMAIL_REPLY_TO_THREAD, which sends at once despite its name: a draft is
+  only ever written with `GMAIL_CREATE_EMAIL_DRAFT` (§2). The only posts a run makes
   go through `post_to_slack`: to its owner, the once-a-day digest and the
   between-digest messages §4.9 allows; to `alerts`, one line per new Sponsors
   CRM lead (§5.3).
@@ -37,18 +40,19 @@ task tracker — is set in their scheduled task (§3), never on the Rules page.
   Error field.
 - **Do-not-contact is absolute.** Never draft to, look up or route through
   anyone the Rules page lists.
-- **The HSC workspace is the `hsc` account, and only that.** Read and write
-  the Rules page, Sponsors CRM and Run log only through the Composio Notion
-  account `hsc` (§2), and never find them by search. If `hsc` cannot be
-  selected, or the Sponsors CRM is not found through it, stop: log the run
+- **The HSC workspace is reached by its IDs, and only there.** Read and
+  write the Rules page, Sponsors CRM and Run log only by the IDs in §2:
+  through the Composio Notion account `hsc`, or, when Composio cannot be
+  used, through Claude's Notion connector (§2) — and never find them by
+  search. If neither path reaches the Sponsors CRM, stop: log the run
   failed with Fix "Connect the HSC Notion workspace in Composio as `hsc`".
   When the Run log is what cannot be reached, end with that Fix in the digest
   instead. Never write HSC data to any other workspace, except the owner's
   own HSC next steps as tasks in their Task tracker (§4.8).
 - **Personal workspaces belong to the owner.** Write to a Personal CRM or Task
   tracker (§3) only for the owner this task runs for, only through the
-  Composio account its parameter names, and only as §4.7, §4.8 and §5.4
-  allow.
+  Composio account its parameter names (or Claude's Notion connector, by the
+  same database's URL, §2), and only as §4.7, §4.8 and §5.4 allow.
   Nothing from a personal row — its name, company, people or next step —
   enters the Sponsors CRM, the Run log, the prospecting server, Slack or any
   other shared place.
@@ -73,7 +77,8 @@ task tracker — is set in their scheduled task (§3), never on the Rules page.
 - **Summaries, not content.** Notion gets one-line summaries and links. Never
   copy message text, phone numbers or personal details into Notion.
 - **Draft only to verified addresses.** An address is verified when it
-  appears in a header of a real message in the user's mailbox. Otherwise
+  appears in a header of a real message, not a draft, in the mailbox the
+  draft goes in. Otherwise
   write "Needs a verified email" in Next step and skip the draft.
 
 ## 2. Locations
@@ -85,19 +90,102 @@ task tracker — is set in their scheduled task (§3), never on the Rules page.
 | Run log | collection://9c977f46-c7b2-4126-9357-781d56a057f4 | data source `9c977f46-c7b2-4126-9357-781d56a057f4`, database `64efc12133db449187e39aae74145619` |
 | Warm-path map | the `prospecting` MCP server (prospecting.hscompute.com) | |
 
-**Notion goes through the Composio connector, one connected account per
-workspace.** The HSC workspace, which holds everything above, is the account
-named `hsc`. Select it on every call: run Notion tools through
-`COMPOSIO_MULTI_EXECUTE_TOOL` with `account: "hsc"` on each item in `tools`,
-never as a Notion tool called on its own, which may not carry the account.
-`NOTION_GET_PAGE_MARKDOWN` reads the Rules page, `NOTION_QUERY_DATA_SOURCE`
-reads rows by data source ID, `NOTION_UPDATE_ROW_DATABASE` changes a row by
-its page ID, and `NOTION_INSERT_ROW_DATABASE` adds one by database ID. Every
-property value is a string, a number too: Rows touched is `"3"`, never `3`.
-Check arguments with `COMPOSIO_GET_TOOL_SCHEMAS`, except for the two Run log
-calls §4.0 pins, which keep the idle path within its budget; if a slug is gone,
-find its replacement with `COMPOSIO_SEARCH_TOOLS`. A personal database (§3) is reached
-the same way, with its own account in place of `hsc`.
+<!-- shared: notion-paths — identical in every outreach skill; a test holds them equal -->
+**Notion goes through Composio first, and Claude's Notion connector when
+Composio cannot be used.** Composio holds one connected account per
+workspace; the HSC workspace, which holds the pages above, is the account
+named `hsc`. Run Notion tools through `COMPOSIO_MULTI_EXECUTE_TOOL` with
+`account: "hsc"` on each item in `tools` (a personal database's own account
+in its place), never as a Notion tool called on its own, which may not carry
+the account. Every property value is a string, a number too: `"3"`, never
+`3`. Check arguments with `COMPOSIO_GET_TOOL_SCHEMAS`; if a slug is gone,
+find its replacement with `COMPOSIO_SEARCH_TOOLS`.
+
+**The fallback.** When Composio cannot be used for a call — its tools are
+missing, the account is not connected, or the call fails for anything but
+its arguments — make that call once through Claude's Notion connector, by
+the same page URL or `collection://` URL, and never by search. An ID
+resolves only in its own workspace, so the connector reaches a page only
+when it is connected to that page's workspace, and otherwise fails instead
+of writing elsewhere. A write that went through one path is never repeated
+through the other. Each step, Composio's tool first:
+
+| Step | Composio | Claude's Notion connector |
+| --- | --- | --- |
+| Read a page | `NOTION_GET_PAGE_MARKDOWN`, by page ID | `notion-fetch`, by its URL |
+| A database's columns | `NOTION_FETCH_DATABASE`, by database ID | `notion-fetch`, by its `collection://` URL |
+| Read rows | `NOTION_QUERY_DATA_SOURCE` by data source ID, or `NOTION_QUERY_DATABASE_WITH_FILTER` by database ID | `notion-query-data-sources`, rows mode, its `collection://` URL as `data_source_url` and a filter |
+| Change a row | `NOTION_UPDATE_ROW_DATABASE`, by page ID | `notion-update-page`, command `update_properties` |
+| Add a row | `NOTION_INSERT_ROW_DATABASE`, by database ID | `notion-create-pages`, the data source as parent |
+| Name the workspace | `NOTION_WHO_AM_I` | `notion-get-self` |
+| List its people | `NOTION_LIST_USERS` | `notion-get-users` |
+
+The connector takes each value in its own type — a number as a number, a
+date under its property name — as its tool's description says. Its rows
+mode returns at most 100 rows and no cursor, so filter to what the step
+needs; outside Notion's Business and Enterprise plans it also spends a
+usage allowance, which is why it is the fallback. When neither path
+reaches the HSC workspace, the Fix is "Connect the HSC Notion workspace in
+Composio as `hsc`".
+<!-- /shared: notion-paths -->
+
+The two Run log calls §4.0 pins keep their arguments as written, without a
+schema fetch, so the idle path stays within its budget. A personal database
+(§3) is reached the same way as the HSC pages, with its own account in place
+of `hsc`.
+
+**Gmail goes through Composio first, and Claude's Gmail connector when
+Composio cannot be used for a mailbox** — mailbox by mailbox, as §3's Gmail
+input names them. Each step, Composio's tool first:
+
+- **Search:** `GMAIL_LIST_THREADS` with the Gmail query as `query`, or
+  `search_threads`. Composio's answer is thread IDs and snippets only, with
+  no sender or subject. `after:` takes epoch seconds through Composio,
+  although its schema text asks for a date (DECISIONS §39). The connector's
+  `search_threads` has answered epoch seconds with an Internal error: then
+  retry it once with the date form `after:YYYY/MM/DD` of the same day, which
+  rereads at most that day.
+- **Read a thread:** `GMAIL_FETCH_MESSAGE_BY_THREAD_ID`, or `get_thread`
+  (PLAIN_TEXT). Composio's messages come unordered: the newest is the one
+  with the latest `messageTimestamp`, and a long thread continues on the
+  next page (`page_token`). Its messages carry `sender`, `to`, `subject`,
+  `messageText` and `labelIds`. A message labelled `DRAFT` is a draft, not a
+  message: it is never evidence, never Last Contact, and never the source of
+  a verified address (§1).
+- **Existing drafts:** through Composio, a message labelled `DRAFT` in the
+  thread `GMAIL_FETCH_MESSAGE_BY_THREAD_ID` returned, or `list_drafts`.
+- **Write a draft:** `GMAIL_CREATE_EMAIL_DRAFT` with the thread's ID as
+  `thread_id`, no subject, and the people the newest real message was
+  between, never the mailbox's own address: its other party as
+  `recipient_email` (its sender, or when the owner sent it, its first To
+  address), the rest of its To as `extra_recipients`, its Cc as `cc` — each
+  a verified address (§1) — the text as `body`, and
+  `include_signature: false`, since the draft already signs as the owner
+  (§4.6); or `create_draft` with `replyToMessageId`.
+- **Thread link:**
+  `https://mail.google.com/mail/u/<mailbox address>/#all/<thread ID>`, or
+  the connector's `viewUrl`.
+
+Through Composio, every Gmail tool runs inside `COMPOSIO_MULTI_EXECUTE_TOOL`
+with `account` set to the mailbox's Composio Gmail account, on each item:
+with more than one Gmail account connected, Composio refuses a call without
+it. Several mailboxes go as one call with one item per mailbox, so a search
+is still one call. A draft goes in the mailbox its thread came from.
+`GMAIL_CREATE_EMAIL_DRAFT` quietly starts a new thread when it is given a
+subject, or a thread ID that mailbox does not have, so give it only a thread
+ID read from that mailbox in this run. Check arguments with
+`COMPOSIO_GET_TOOL_SCHEMAS`, except for the search §4.0 pins.
+
+**The fallback is the same mailbox, never another.** When Composio cannot
+be used for a mailbox — its tools are missing, the account is not connected,
+or its item fails for anything but its arguments — that mailbox's calls go
+through the connector instead, but only when the connector is that same
+mailbox (§3 says when). Gmail thread IDs and drafts are the mailbox's own,
+so the same thread is the same thread on either path, and nothing is
+drafted twice. A connector signed in to a different mailbox is never a
+fallback: its drafts and threads are ones this task does not track. A
+mailbox neither path reaches did not answer (§3). Either way the source is
+`gmail` (§4.3).
 
 Dates are America/Los_Angeles.
 
@@ -122,6 +210,26 @@ Dates are America/Los_Angeles.
   matches personal leads against it; without it, §5.4 is skipped.
 - **Task tracker** (optional). The same: a Notion database URL and its
   Composio account.
+- **Gmail.** The task names the mailboxes the run reads (§2):
+  - "Gmail: Composio account <alias> (<address>)." — the mailbox connected
+    in Composio under that alias. Several mailboxes go in one sentence,
+    comma-separated, each with the address the thread link needs: "Gmail:
+    Composio account work (riley@acme.com), personal (riley@gmail.com)."
+  - "Connector fallback: <address>." — Claude's Gmail connector is signed
+    in to that same mailbox, so it is that mailbox's fallback (§2).
+  - "Gmail: connector." — Claude's Gmail connector only, for an owner
+    without Gmail in Composio.
+  - No Gmail sentence (a task set up before this): every active Gmail
+    account Composio has, listed with one `COMPOSIO_MANAGE_CONNECTIONS`
+    `list` call, which also gives each address; the connector only when
+    Composio has no Gmail account or its tools are missing.
+
+  A mailbox neither path reaches did not answer: read the others, carry on,
+  and log partial with Error "Gmail unreachable" and Fix "Connect Gmail in
+  Composio, then say “set up my outreach” so the task names it". A mailbox
+  that answered through the fallback did answer: the run is not partial for
+  it, and the digest says once "Gmail <address> answered through Claude's
+  connector: reconnect it in Composio".
 - **Beeper** (optional). The task says "Beeper: on this computer." when the
   owner reads texts through Beeper Desktop. Then Beeper is expected: when its
   tools are missing, the run is not on that computer, or Beeper is closed.
@@ -171,7 +279,7 @@ conflicts, log partial with Error "state conflict".
 below; a copy read from the repo says `unstamped`. Read it from this file's
 own text as you loaded it, never from another file in the plugin (§4.9).
 
-This plugin's version: `f5e3371b`.
+This plugin's version: `486e0e4c`.
 
 ## 4. Procedure
 
@@ -182,19 +290,27 @@ since the last one:
 
 1. `get_state`, job `daily-outreach-run`. With no state, skip the rest of
    §4.0 and run §4.1 onward over every row, with Since as §3 defines it.
-2. Gmail `search_threads`, one search over everything new: every domain in
+2. Gmail, one search over everything new: every domain in
    state `rows` and each row's name (the part of its key before `|`,
    quoted), plus LinkedIn's acceptance emails, after the watermark in epoch
    seconds, e.g.
-   `(from:modal.com OR to:modal.com OR "modal" OR (from:linkedin.com subject:"accepted your invitation")) after:1791993600`.
+   `(from:modal.com OR to:modal.com OR "modal" OR (from:linkedin.com subject:"accepted your invitation")) -in:draft after:1791993600`.
+   `-in:draft` keeps a draft, the run's own included, from counting as new.
    Epoch seconds, because a date in `after:` means a whole day, and an
-   hourly run would reread that day every hour.
+   hourly run would reread that day every hour. Through Composio (§2) it is
+   one `COMPOSIO_MULTI_EXECUTE_TOOL` call with one `GMAIL_LIST_THREADS` item
+   per mailbox, each with its `account` and these arguments as written:
+   `{ "query": "<the search above>", "max_results": 100 }`. Its answer has
+   no sender or subject, and the search names only sponsors and LinkedIn
+   acceptances, so every thread it returns is new evidence. A mailbox on
+   the connector (§2, §3) is searched with `search_threads` instead.
 3. Granola `list_meetings`: meetings that ended since the watermark.
 4. Beeper `search_chats`: chats with activity since the watermark — only
    when Beeper's tools are present and the task does not say "Beeper: off."
    (§3). When the task expects Beeper (§3) and
    its tools are missing, Beeper did not answer, so this is not the idle
-   path.
+   path. Give Beeper its time in UTC, ending in Z: it refuses an offset such
+   as `-07:00` with a 400.
 
 **New evidence** is a message, meeting or chat after the watermark that
 involves a CRM row's sponsor, a LinkedIn "accepted your invitation" email,
@@ -226,15 +342,22 @@ every call above answered, the run makes exactly these calls and stops:
    `runLog` naming today's row (its `result` unchanged).
 
 Then end with exactly `No changes.` and nothing else: no Rules page, no CRM
-query, no other Notion write, no `post_to_slack`, no `whoami`. That is six
-calls at most, five without Beeper. Only three things may add calls:
+query, no other Notion write, no `post_to_slack`. That is six
+calls at most, five without Beeper, whichever Gmail path the task names.
+Only these may add calls:
 
 - a "conflict:" answer from `put_state` (§3's retry: two calls);
 - a Composio call refused for its arguments: fetch the schema with
   `COMPOSIO_GET_TOOL_SCHEMAS` and retry once (two calls);
 - an update refused because `runLog.pageId` is not found or archived: find
   today's row by title, else create it, as §4.9 does, and record the new ID
-  (up to two calls). Never retry a dead ID.
+  (up to two calls). Never retry a dead ID;
+- a task with no Gmail sentence: the one `COMPOSIO_MANAGE_CONNECTIONS`
+  `list` call §3 needs before the search (one call);
+- a fallback (§2): the Gmail search for the mailboxes Composio could not
+  reach, or the Run log write, made once through Claude's connector
+  instead (one call each), and the connector's date-form retry (§2, one
+  call).
 
 A call that fails for any other reason ends the idle path: run §4.1 onward
 and log partial.
@@ -257,16 +380,20 @@ owned.
 Gather everything since **Since**, newest first, starting from what §4.0
 found:
 
-- **Gmail.** Search the row's email domains and addresses and the sponsor
-  name, e.g. `(from:modal.com OR to:modal.com OR "Modal") after:<epoch seconds>`.
+- **Gmail**, through the path §3 names (§2), in every mailbox it names.
+  Search the row's email domains and addresses and the sponsor
+  name, e.g. `(from:modal.com OR to:modal.com OR "Modal") -in:draft after:<epoch seconds>`,
+  in epoch seconds on either path (§2).
   Search previews show only the oldest messages, so read the newest matching
-  thread with `get_thread` (PLAIN_TEXT) before judging it.
+  thread with `get_thread` (PLAIN_TEXT) or `GMAIL_FETCH_MESSAGE_BY_THREAD_ID`
+  before judging it.
 - **Granola.** Ask `query_granola_meetings` what was discussed with the
   sponsor in the window.
 - **Beeper**, only when its tools are present and the task does not say
   "Beeper: off." (§3). `search_messages` matches
   literal words, so search one distinctive word: the sponsor's name, then the
-  contact's first name.
+  contact's first name. It needs a query, and it ignores a date filter, so
+  keep only the messages dated after Since yourself.
 
 Skip unrelated namesakes (an "Index" that is not Index Ventures). A row with
 nothing since Since keeps its Last Contact column, which is what §4.4's
@@ -309,7 +436,7 @@ Then call `run_summary` on that run.
 ### 4.5 Writes, per row
 
 Update only: Last Contact, Next step, Next step date, Thread link (the newest
-relevant Gmail thread's `viewUrl`, or the Granola note or shared document
+relevant Gmail thread's link (§2), or the Granola note or shared document
 where the conversation actually lives), Suggested status, Primary contact and
 Email (each only when empty; Email only with a verified address), Best route
 and Route holder (below), Last synced (now), and Status within §1's limits.
@@ -328,9 +455,11 @@ server, which keeps them current; never write them. Read them for §4.9.
 
 For each stalled row where a draft would move it forward:
 
-1. Check `list_drafts` for an existing draft on that thread; never duplicate.
-2. Reply on the newest thread (`replyToMessageId`), to its verified sender
-   address(es).
+1. Check for an existing draft on that thread (§2); never duplicate.
+2. Reply on the newest thread, to its verified sender address(es):
+   `GMAIL_CREATE_EMAIL_DRAFT` with its `thread_id` and no subject and the
+   fields §2 names, or `create_draft` with `replyToMessageId`, in the
+   mailbox it came from.
 3. Waiting on them: a short, specific nudge that references the last
    exchange. Waiting on us: answer what was asked when the thread and Rules
    page answer it; otherwise skip the draft and say what is needed in Next
@@ -339,6 +468,20 @@ For each stalled row where a draft would move it forward:
 5. When the live conversation is a text or WhatsApp chat, there is nothing to
    draft into. Put a one-line suggested message in the digest instead, for
    the owner to send themselves.
+6. When Gmail refuses `GMAIL_CREATE_EMAIL_DRAFT` or `create_draft` (a
+   missing permission, or an approval nobody is there to give), try the
+   same draft once through the mailbox's connector fallback (§2), when it
+   has one; never retry the refused call, and never write the draft any
+   other way. When no path writes it, put the draft's gist in the row's
+   Next step and in the digest, and log partial (§4.9) with Error "Gmail
+   refused the draft: <its error>" and Fix "Connect <address> in Composio
+   again under a new alias, allowing every permission on Google's screen,
+   then say “set up my outreach” so the task names it, and remove the old
+   account in Composio's dashboard" — on the connector alone, "Reconnect
+   Gmail in Customize → Connectors, tick 'Manage drafts and send emails' on
+   Google's screen, and set Gmail's draft tools to Always allow under its
+   Tool permissions".
+   Logged as ok, a refused draft never reaches the watchdog.
 
 ### 4.7 Personal CRM
 
@@ -395,10 +538,10 @@ find by title, then create, and never retry it. On creation write Run
 "Daily outreach run · <owner> · <date>", Job "Daily outreach run", Owner and
 Started (this run's start; the day's first run). On every run write Finished
 (now), Next run due (one hour after this run started), Result (ok; partial
-when a source was unreachable; failed when the run could not finish), Rows
+when a source was unreachable or a draft was refused, §4.6; failed when the run could not finish), Rows
 touched (Sponsors CRM rows, added to the day's total), Summary (this run,
 one line), Error, and Fix (what a person should do, such as "Reconnect Gmail
-in Claude settings"). Times are ISO 8601 with an offset or Z, as in §4.0.
+in Composio"). Times are ISO 8601 with an offset or Z, as in §4.0.
 Personal rows and tasks appear in the Summary only as counts. If no row can
 be found or created, end with Fix "Connect the HSC Notion workspace in
 Composio as `hsc`" (§1).
@@ -407,8 +550,8 @@ Then `put_state` (§3): `runLog` naming today's row with this run's Result,
 `rows` as §4.1 read them, `seen.leads` as §5 left it, and `lastDigest` set
 to today when this run sends the digest. Advance `watermark` to this run's
 start, and `lastSweep` too when this run was the sweep, only when every
-source answered (Gmail, Granola, and Beeper when present or expected and not
-off, §3). When one was
+source answered (Gmail in every mailbox the task names, Granola, and Beeper
+when present or expected and not off, §3). When one was
 unreachable, keep the old values, so the next run reads that window again
 rather than skipping what it could not see.
 
@@ -418,16 +561,18 @@ naming the sponsor and what is needed, never quoting the message. Otherwise
 post nothing. End the run with those lines, or one line on what changed.
 
 **The digest**, once a day, from the first run at or after 8am (§4.0). If the
-Run log row titled "Watchdog heartbeat" has a Next run due in the past, say
-so first in the digest: the watchdog itself has stopped.
+Run log row titled "Watchdog heartbeat" has a Next run due more than 2 hours
+in the past, say so first in the digest: the watchdog itself has stopped.
+A Next run due between 8pm and 8am does not count: the watchdog requires its
+computer, which may sleep overnight, and its first morning run catches up.
 
-Then the owner's own setup, when the prospecting server is connected. Call
-`whoami` once:
+Then the owner's own setup, when the prospecting server is connected, from
+the `get_state` answer §4.0 read:
 
 - **Plugin.** Compare its `plugin_version` with the version in §3 — the
   "This plugin's version" line of this file. When they differ, add "Update
   your outreach plugin — https://prospecting.hscompute.com/settings/install#plugin".
-  When the line says `unstamped`, or `whoami` has no `plugin_version`, say
+  When the line says `unstamped`, or that answer has no `plugin_version`, say
   nothing: there is nothing to compare.
 - **Setup.** When its `whats_new` is dated on or after the day of the last
   digest (state `lastDigest`), add
