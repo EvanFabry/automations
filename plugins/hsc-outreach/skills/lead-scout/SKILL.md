@@ -90,6 +90,35 @@ reaches the HSC workspace, the Fix is "Connect the HSC Notion workspace in
 Composio as `hsc`".
 <!-- /shared: notion-paths -->
 
+<!-- shared: slack-links — identical in every skill that posts to Slack; a test holds them equal -->
+**Every Slack line links what it names.** `post_to_slack` takes Slack
+mrkdwn, so a link is `<url|label>`, its label the words the line already
+says — the sponsor's name, "thread", "draft", "meeting notes", "Run log" —
+so the line still reads as a sentence. Link only what this run read or
+wrote, by the address its tool answered with:
+
+- **A Notion page or row** — a Sponsors CRM row, a Run log row, the Rules
+  page: the `url` the read or write answered with, else
+  `https://app.notion.com/p/<page ID without dashes>`.
+- **A Gmail thread** —
+  `https://mail.google.com/mail/u/<mailbox address>/#all/<thread ID>`, or
+  the connector's `viewUrl`. A draft opens in its thread, so the thread's
+  link is the draft's.
+- **A Granola meeting** — `https://notes.granola.ai/d/<meeting ID>`, the
+  link its answer cites.
+- **A public page** — the page a fact came from.
+
+A thread or a meeting opens only for the person whose account holds it, so
+link one only in a post to that person, never in `alerts`; a post to
+`alerts` links the CRM or Run log row instead, which holds the rest. Nothing
+without an address of its own gets a link — a Beeper chat, a call — and the
+line names where it happened instead ("on WhatsApp"). Never build a link
+from a name or guess an ID: a link with no ID from this run is left out,
+and the line stands without it. A link carries nothing §1 keeps out of
+Slack. Links count toward the post's 3000 characters: when a post would run
+over, shorten lines, never cut a link.
+<!-- /shared: slack-links -->
+
 ## 3. What a good lead is
 
 A company that would plausibly pay to be in the room where compute is bought
@@ -179,6 +208,7 @@ Write one Run log row per day through `hsc`, finding it by title before
 creating it: Run "Lead scout · <date>", Job "Lead scout", Result, Started,
 Finished, Next run due (one day after Started), Rows touched, Summary,
 Error, Fix. Then post to `alerts` with
-`post_to_slack`: one line per lead (name, why, route), and "Give a lead an
+`post_to_slack`: one line per lead (name, linked to the row just created;
+why, linked to its source; route — §2's links), and "Give a lead an
 Account Owner to take it, or set Lost to drop it." End the run with the same
 lines.

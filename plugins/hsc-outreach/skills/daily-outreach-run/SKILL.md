@@ -187,6 +187,35 @@ fallback: its drafts and threads are ones this task does not track. A
 mailbox neither path reaches did not answer (§3). Either way the source is
 `gmail` (§4.3).
 
+<!-- shared: slack-links — identical in every skill that posts to Slack; a test holds them equal -->
+**Every Slack line links what it names.** `post_to_slack` takes Slack
+mrkdwn, so a link is `<url|label>`, its label the words the line already
+says — the sponsor's name, "thread", "draft", "meeting notes", "Run log" —
+so the line still reads as a sentence. Link only what this run read or
+wrote, by the address its tool answered with:
+
+- **A Notion page or row** — a Sponsors CRM row, a Run log row, the Rules
+  page: the `url` the read or write answered with, else
+  `https://app.notion.com/p/<page ID without dashes>`.
+- **A Gmail thread** —
+  `https://mail.google.com/mail/u/<mailbox address>/#all/<thread ID>`, or
+  the connector's `viewUrl`. A draft opens in its thread, so the thread's
+  link is the draft's.
+- **A Granola meeting** — `https://notes.granola.ai/d/<meeting ID>`, the
+  link its answer cites.
+- **A public page** — the page a fact came from.
+
+A thread or a meeting opens only for the person whose account holds it, so
+link one only in a post to that person, never in `alerts`; a post to
+`alerts` links the CRM or Run log row instead, which holds the rest. Nothing
+without an address of its own gets a link — a Beeper chat, a call — and the
+line names where it happened instead ("on WhatsApp"). Never build a link
+from a name or guess an ID: a link with no ID from this run is left out,
+and the line stands without it. A link carries nothing §1 keeps out of
+Slack. Links count toward the post's 3000 characters: when a post would run
+over, shorten lines, never cut a link.
+<!-- /shared: slack-links -->
+
 Dates are America/Los_Angeles.
 
 ## 3. Inputs
@@ -279,7 +308,7 @@ conflicts, log partial with Error "state conflict".
 below; a copy read from the repo says `unstamped`. Read it from this file's
 own text as you loaded it, never from another file in the plugin (§4.9).
 
-This plugin's version: `486e0e4c`.
+This plugin's version: `82e6a5a0`.
 
 ## 4. Procedure
 
@@ -557,7 +586,8 @@ rather than skipping what it could not see.
 
 **Between digests**, post to `me` with `post_to_slack` only when a sponsor
 replied and is waiting on us, or a draft is ready (§4.6): one line per row,
-naming the sponsor and what is needed, never quoting the message. Otherwise
+naming the sponsor, linked to its CRM row, and what is needed, with a link
+to the thread or draft (§2), never quoting the message. Otherwise
 post nothing. End the run with those lines, or one line on what changed.
 
 **The digest**, once a day, from the first run at or after 8am (§4.0). If the
@@ -589,7 +619,9 @@ the people listed at that sponsor with who knows them — "Lambda: Kai Ito, in
 Babur's contacts" — at most three lines, never a number), the sponsor leads §5.3 added since the
 last digest, anything needing their decision, and, when §4.7, §4.8 or §5.4
 ran, "<n> personal rows updated, <m> tasks created or updated, <k> personal
-leads added". Never quote
+leads added". Each line about a sponsor links its CRM row, and the thread,
+draft or meeting notes it is about (§2); the personal counts stay a bare
+line, with no link. Never quote
 other people's messages. Post it to `me` with `post_to_slack` when the
 prospecting server is connected; whether or not that posts, end the run with
 the same digest.
@@ -651,9 +683,10 @@ Leave Account Owner empty: a person approves by giving it an owner, or drops
 it by setting Lost. The reason is a summary in our words, never quoted text,
 a person's email address or a phone number. At most five per run.
 
-Then post one line per lead to `alerts` with `post_to_slack`: the name, why,
-"sourced by <owner>", and "Give it an Account Owner to take it, or set Lost
-to drop it."
+Then post one line per lead to `alerts` with `post_to_slack`: the name,
+linked to the row just created (§2), why, "sourced by <owner>", and "Give
+it an Account Owner to take it, or set Lost to drop it." The thread stays
+off `alerts`: it is the owner's, and the row's Thread link holds it.
 
 ### 5.4 Personal leads
 

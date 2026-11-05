@@ -81,6 +81,35 @@ reaches the HSC workspace, the Fix is "Connect the HSC Notion workspace in
 Composio as `hsc`".
 <!-- /shared: notion-paths -->
 
+<!-- shared: slack-links — identical in every skill that posts to Slack; a test holds them equal -->
+**Every Slack line links what it names.** `post_to_slack` takes Slack
+mrkdwn, so a link is `<url|label>`, its label the words the line already
+says — the sponsor's name, "thread", "draft", "meeting notes", "Run log" —
+so the line still reads as a sentence. Link only what this run read or
+wrote, by the address its tool answered with:
+
+- **A Notion page or row** — a Sponsors CRM row, a Run log row, the Rules
+  page: the `url` the read or write answered with, else
+  `https://app.notion.com/p/<page ID without dashes>`.
+- **A Gmail thread** —
+  `https://mail.google.com/mail/u/<mailbox address>/#all/<thread ID>`, or
+  the connector's `viewUrl`. A draft opens in its thread, so the thread's
+  link is the draft's.
+- **A Granola meeting** — `https://notes.granola.ai/d/<meeting ID>`, the
+  link its answer cites.
+- **A public page** — the page a fact came from.
+
+A thread or a meeting opens only for the person whose account holds it, so
+link one only in a post to that person, never in `alerts`; a post to
+`alerts` links the CRM or Run log row instead, which holds the rest. Nothing
+without an address of its own gets a link — a Beeper chat, a call — and the
+line names where it happened instead ("on WhatsApp"). Never build a link
+from a name or guess an ID: a link with no ID from this run is left out,
+and the line stands without it. A link carries nothing §1 keeps out of
+Slack. Links count toward the post's 3000 characters: when a post would run
+over, shorten lines, never cut a link.
+<!-- /shared: slack-links -->
+
 Times are America/Los_Angeles.
 
 ## 3. What counts as a problem
@@ -139,7 +168,8 @@ ok).
 ### 4.4 Report
 
 Write one line per problem or recovery: job, owner, what happened, and the
-fix. Post them together to `alerts`, and post each problem's line to its
+fix. Link what happened to the group's newest Run log row, and the fix to
+the page it names when it names one (§2's links). Post them together to `alerts`, and post each problem's line to its
 owner by name as well, so the person who can fix it hears directly. When
 there is nothing new, post "All clear." to `alerts` only in the run that
 starts between 8am and noon, so the channel sees one each morning and a
